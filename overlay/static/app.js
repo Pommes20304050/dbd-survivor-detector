@@ -77,10 +77,22 @@ $('btnShutdown').addEventListener('click', async () => {
 
 // ─── Settings ─────────────────────────────────────────────
 
-$('confSlider').addEventListener('input', e => {
-    const v = parseFloat(e.target.value);
-    $('confValue').textContent = `${Math.round(v * 100)}%`;
-    api('/config', 'POST', { conf: v });
+function setConf(v) {
+    const pct = `${Math.round(v * 100)}%`;
+    const s1 = $('confSlider'); if (s1) { s1.value = v; }
+    const s2 = $('confSliderDash'); if (s2) { s2.value = v; }
+    set('confValue', 'textContent', pct);
+    set('confValueDash', 'textContent', pct);
+}
+
+['confSlider', 'confSliderDash'].forEach(id => {
+    const sl = $(id);
+    if (!sl) return;
+    sl.addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        setConf(v);
+        api('/config', 'POST', { conf: v });
+    });
 });
 
 $('thickSlider').addEventListener('input', e => {
@@ -428,8 +440,7 @@ function drawDonut(s) {
 async function init() {
     const s = await api('/status');
     if (s) {
-        $('confSlider').value = s.conf;
-        $('confValue').textContent = `${Math.round(s.conf * 100)}%`;
+        setConf(s.conf);
         $('thickSlider').value = s.box_thickness || 3;
         $('thickValue').textContent = `${s.box_thickness || 3}px`;
         $('maxDetSlider').value = s.max_detections || 10;

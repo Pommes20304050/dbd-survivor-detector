@@ -685,6 +685,70 @@ canvas#mainChart {
   border: 1px solid var(--border-orange);
 }
 
+.quick-slider {
+  padding: 10px 14px 12px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg,
+    rgba(255, 140, 0, 0.08),
+    rgba(255, 184, 0, 0.04));
+  border: 1px solid var(--border-orange);
+  border-radius: 10px;
+}
+
+.quick-slider-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.quick-slider-value {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--orange);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.quick-slider input[type="range"] {
+  width: 100%;
+  height: 5px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.quick-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
+  transition: all 0.15s;
+}
+
+.quick-slider input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.quick-slider-hint {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
 .feed-wrap {
   position: relative;
   aspect-ratio: 16 / 9;
