@@ -170,9 +170,14 @@
           <div class="card-head">
             <div>
               <div class="card-title">Live Neural Feed</div>
-              <div class="card-sub">Monitor 1 mit AI-Boxes</div>
+              <div class="card-sub">AI-Boxes auf ausgewähltem Monitor</div>
             </div>
-            <div class="feed-fps" id="feedFps">—</div>
+            <div class="feed-actions">
+              <select class="monitor-select" id="monitorSelect">
+                <option>Monitor...</option>
+              </select>
+              <div class="feed-fps" id="feedFps">—</div>
+            </div>
           </div>
           <div class="feed-wrap">
             <img id="liveMirror" src="/video_feed" alt="Live Feed">

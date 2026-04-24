@@ -442,24 +442,37 @@ button { font-family: inherit; cursor: pointer; }
 
 .chart-value-big {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  font-size: 48px;
+  top: 8px;
+  right: 8px;
+  font-size: 42px;
   font-weight: 800;
   color: var(--orange);
   letter-spacing: -2px;
   line-height: 1;
   text-shadow: 0 0 30px rgba(255, 140, 0, 0.4);
+  background: linear-gradient(135deg,
+    rgba(26, 28, 34, 0.95),
+    rgba(26, 28, 34, 0.7));
+  backdrop-filter: blur(12px);
+  padding: 10px 18px 6px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  z-index: 2;
 }
 
 .chart-value-sub {
   position: absolute;
-  top: 68px;
-  right: 12px;
-  font-size: 11px;
+  top: 62px;
+  right: 18px;
+  font-size: 10px;
   color: var(--text-dim);
   letter-spacing: 2px;
   text-transform: uppercase;
+  z-index: 2;
+}
+
+.chart-label {
+  z-index: 1;
 }
 
 canvas#mainChart {
@@ -615,6 +628,46 @@ canvas#mainChart {
 .mini-bar-fill.red    { background: var(--red); }
 
 /* ══ Live Feed ═══════════════════════════════════════════════════ */
+
+.feed-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.monitor-select {
+  padding: 6px 28px 6px 14px;
+  background: var(--bg-3);
+  color: var(--text);
+  border: 1px solid var(--border-2);
+  border-radius: 16px;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23ff8c00' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: all 0.2s;
+}
+
+.monitor-select:hover {
+  border-color: var(--orange);
+  background-color: var(--bg-hover);
+}
+
+.monitor-select:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px var(--orange-soft);
+}
+
+.monitor-select option {
+  background: var(--bg-3);
+  color: var(--text);
+}
 
 .feed-fps {
   padding: 4px 12px;
