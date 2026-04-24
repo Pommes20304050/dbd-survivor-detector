@@ -101,6 +101,35 @@ $('maxDetSlider').addEventListener('input', e => {
     $(id).addEventListener('change', e => api('/config', 'POST', { [keyMap[id]]: e.target.checked }));
 });
 
+// Monitor-Select
+const monitorSelect = $('monitorSelect');
+if (monitorSelect) {
+    monitorSelect.addEventListener('change', async (e) => {
+        const idx = parseInt(e.target.value);
+        if (!isNaN(idx)) {
+            await api('/monitor', 'POST', { index: idx });
+        }
+    });
+}
+
+function renderMonitors(monitors, activeIdx) {
+    if (!monitorSelect || !monitors || monitors.length === 0) return;
+    const sig = monitors.map(m => m.name).join('|');
+    if (monitorSelect.dataset.sig === sig) {
+        monitorSelect.value = activeIdx;
+        return;
+    }
+    monitorSelect.dataset.sig = sig;
+    monitorSelect.innerHTML = '';
+    monitors.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.idx;
+        opt.textContent = m.name;
+        monitorSelect.appendChild(opt);
+    });
+    monitorSelect.value = activeIdx;
+}
+
 document.querySelectorAll('.color-dot').forEach(d => {
     d.addEventListener('click', e => {
         document.querySelectorAll('.color-dot').forEach(x => x.classList.remove('selected'));
@@ -206,7 +235,7 @@ function el(tag, cls, text) {
 }
 
 function renderPresets(presets, active) {
-    const order = ['standard', 'competitive', 'minimal', 'stream'];
+    const order = ['maximum', 'standard', 'competitive', 'minimal', 'stream'];
     const grid = $('presetGrid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -233,7 +262,7 @@ function renderPresets(presets, active) {
 // ─── Profiles ─────────────────────────────────────────────
 
 function renderProfiles(profiles, active) {
-    const order = ['ultra', 'high', 'balanced', 'fast', 'extreme'];
+    const order = ['max', 'ultra', 'high', 'balanced', 'fast', 'extreme'];
     const grid = $('profileGrid');
     if (!grid) return;
     grid.innerHTML = '';

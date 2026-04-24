@@ -103,6 +103,19 @@ PORT        = 8765
 # (basierend auf Benchmarks deiner RTX 4070 Super mit v3 Modell)
 # Presets für Anfänger — bundelt alle Settings zusammen
 SIMPLE_PRESETS = {
+    'maximum': {
+        'name':    'MAXIMUM',
+        'emoji':   '⚡',
+        'desc':    'Volle GPU-Power, 1920px, TTA, beste Erkennung',
+        'profile':         'max',
+        'conf':            0.35,
+        'show_labels':     True,
+        'show_crosshair':  True,
+        'show_hud_regions': False,
+        'color':           '#ff3300',
+        'box_thickness':   4,
+        'glow':            True,
+    },
     'standard': {
         'name':    'Standard',
         'emoji':   '◉',
@@ -159,12 +172,24 @@ SIMPLE_PRESETS = {
 
 
 PERFORMANCE_PROFILES = {
+    'max': {
+        'name':        'MAX GPU',
+        'imgsz':       1920,
+        'use_engine':  False,   # 1920 → PyTorch (Engine ist 1280)
+        'augment':     True,    # Test-Time Augmentation → ~2x GPU-Last
+        'vram_mb':     4000,
+        'vram_pct':    95,
+        'fps':         12,
+        'quality_pct': 105,
+        'desc':        'GPU maxed out — höchste Qualität, beste Distanz, langsamer',
+    },
     'ultra': {
         'name':        'Ultra',
         'imgsz':       1280,
-        'use_engine':  True,    # Nutzt TensorRT Engine wenn 1280
+        'use_engine':  True,    # TensorRT Engine
+        'augment':     False,
         'vram_mb':     1500,
-        'vram_pct':    75,      # % der aktuellen GPU-Auslastung
+        'vram_pct':    75,
         'fps':         84,
         'quality_pct': 100,
         'desc':        'Maximale Qualität, TensorRT Engine, beste Distanz-Erkennung',
@@ -173,6 +198,7 @@ PERFORMANCE_PROFILES = {
         'name':        'High',
         'imgsz':       960,
         'use_engine':  False,
+        'augment':     False,
         'vram_mb':     1000,
         'vram_pct':    55,
         'fps':         130,
@@ -183,6 +209,7 @@ PERFORMANCE_PROFILES = {
         'name':        'Balanced',
         'imgsz':       768,
         'use_engine':  False,
+        'augment':     False,
         'vram_mb':     700,
         'vram_pct':    40,
         'fps':         180,
@@ -193,6 +220,7 @@ PERFORMANCE_PROFILES = {
         'name':        'Fast',
         'imgsz':       640,
         'use_engine':  False,
+        'augment':     False,
         'vram_mb':     500,
         'vram_pct':    30,
         'fps':         250,
@@ -203,6 +231,7 @@ PERFORMANCE_PROFILES = {
         'name':        'Extreme',
         'imgsz':       480,
         'use_engine':  False,
+        'augment':     False,
         'vram_mb':     350,
         'vram_pct':    20,
         'fps':         350,
@@ -244,6 +273,8 @@ class State:
     min_box_size     = 400       # Minimum Box-Area (px²)
     max_detections   = 10
     active_preset    = 'standard'
+    monitor_index    = 1    # welcher Monitor gescannt wird
+    monitors_info    = []   # Liste verfuegbarer Monitore
     current_boxes    = []
     current_confs    = []
     lock             = threading.Lock()
@@ -285,9 +316,10 @@ class DetectionEngine(threading.Thread):
         with state.lock:
             current_profile = state.profile
         profile = PERFORMANCE_PROFILES.get(current_profile, PERFORMANCE_PROFILES['ultra'])
+        augment = profile.get('augment', False)
         if profile['use_engine'] and self.engine_model:
-            return self.engine_model, profile['imgsz']
-        return self.pt_model, profile['imgsz']
+            return self.engine_model, profile['imgsz'], augment
+        return self.pt_model, profile['imgsz'], augment
 
     @staticmethod
     def _in_hud(box, w, h):
@@ -307,8 +339,21 @@ class DetectionEngine(threading.Thread):
     def run(self):
         print(f"[Engine] Detection-Thread gestartet, wartet auf start...")
         with mss.mss() as sct:
-            # Robust gegen fehlende Monitore
-            mon_idx = 1 if len(sct.monitors) > 1 else 0
+            # Monitor-Liste cachen
+            mons = []
+            for i, m in enumerate(sct.monitors):
+                if i == 0:
+                    mons.append({'idx': 0, 'name': f'Alle Monitore ({m["width"]}x{m["height"]})',
+                                 'width': m['width'], 'height': m['height']})
+                else:
+                    mons.append({'idx': i, 'name': f'Monitor {i} ({m["width"]}x{m["height"]})',
+                                 'width': m['width'], 'height': m['height']})
+            with state.lock:
+                state.monitors_info = mons
+                if state.monitor_index >= len(sct.monitors):
+                    state.monitor_index = 1 if len(sct.monitors) > 1 else 0
+
+            mon_idx = state.monitor_index if len(sct.monitors) > state.monitor_index else 0
             monitor = sct.monitors[mon_idx]
             self.monitor_w = monitor['width']
             self.monitor_h = monitor['height']
@@ -324,13 +369,20 @@ class DetectionEngine(threading.Thread):
 
                 t0 = time.perf_counter()
                 try:
+                    # Monitor-Index live pruefen (Nutzer kann im UI wechseln)
+                    with state.lock:
+                        desired_idx = state.monitor_index
+                    if 0 <= desired_idx < len(sct.monitors):
+                        monitor = sct.monitors[desired_idx]
+                        self.monitor_w = monitor['width']
+                        self.monitor_h = monitor['height']
                     frame = np.array(sct.grab(monitor))[:, :, :3]
 
-                    model, imgsz = self._get_model()
+                    model, imgsz, augment = self._get_model()
                     results = model(
                         frame, classes=self.classes,
                         conf=state.conf_threshold,
-                        imgsz=imgsz, verbose=False
+                        imgsz=imgsz, augment=augment, verbose=False
                     )[0]
                 except Exception as e:
                     # CUDA OOM / driver hang / model error → nicht Thread killen
@@ -541,7 +593,23 @@ def api_status():
             'active_preset':    state.active_preset,
             'presets':          SIMPLE_PRESETS,
             'gpu':              gpu_stats,
+            'monitor_index':    state.monitor_index,
+            'monitors':         state.monitors_info,
         })
+
+
+@app.route('/api/monitor', methods=['POST'])
+def api_monitor():
+    data = request.get_json(silent=True) or {}
+    try:
+        idx = int(data.get('index', -1))
+    except (ValueError, TypeError):
+        return jsonify({'ok': False, 'error': 'invalid index'}), 400
+    with state.lock:
+        if idx < 0 or idx >= len(state.monitors_info):
+            return jsonify({'ok': False, 'error': 'out of range'}), 400
+        state.monitor_index = idx
+    return jsonify({'ok': True, 'monitor_index': idx})
 
 
 @app.route('/api/preset', methods=['POST'])
