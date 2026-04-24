@@ -859,7 +859,7 @@ def api_config():
     try:
         with state.lock:
             if 'conf' in data:
-                state.conf_threshold = max(0.05, min(0.30, float(data['conf'])))
+                state.conf_threshold = max(0.05, min(1.00, float(data['conf'])))
             if 'show_crosshair' in data:
                 state.show_crosshair = bool(data['show_crosshair'])
             if 'show_labels' in data:

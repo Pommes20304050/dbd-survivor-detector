@@ -780,8 +780,23 @@ canvas#mainChart {
   flex-shrink: 0;
 }
 
-.tip-dot.high { background: var(--red); box-shadow: 0 0 6px var(--red); }
-.tip-dot.mid  { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+.tip-dot.red    { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.tip-dot.orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+.tip-dot.amber  { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.tip-dot.gold   { background: var(--gold); box-shadow: 0 0 4px var(--gold); }
+.tip-dot.white  { background: #ffffff; box-shadow: 0 0 4px #ffffff; }
+.tip-dot.high   { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.tip-dot.mid    { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+
+.quick-slider-note {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  font-style: italic;
+}
 
 .feed-wrap {
   position: relative;

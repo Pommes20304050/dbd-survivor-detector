@@ -231,6 +231,30 @@ function updateUI(s) {
     // Monitor-Dropdown
     renderMonitors(s.monitors, s.monitor_index);
 
+    // ALLE Setting-UIs live syncen (Slider/Toggles/Color)
+    if (s.conf != null) setConf(s.conf);
+    const thSl = $('thickSlider');
+    if (thSl && s.box_thickness != null && document.activeElement !== thSl) {
+        thSl.value = s.box_thickness;
+        set('thickValue', 'textContent', `${s.box_thickness}px`);
+    }
+    const mdSl = $('maxDetSlider');
+    if (mdSl && s.max_detections != null && document.activeElement !== mdSl) {
+        mdSl.value = s.max_detections;
+        set('maxDetValue', 'textContent', s.max_detections);
+    }
+    const tl = $('toggleLabels');    if (tl && s.show_labels != null) tl.checked = s.show_labels;
+    const tc = $('toggleConf');      if (tc && s.show_conf != null) tc.checked = s.show_conf;
+    const tg = $('toggleGlow');      if (tg && s.glow != null) tg.checked = s.glow;
+    const tx = $('toggleCrosshair'); if (tx && s.show_crosshair != null) tx.checked = s.show_crosshair;
+    const th = $('toggleHud');       if (th && s.show_hud_regions != null) th.checked = s.show_hud_regions;
+
+    if (s.color) {
+        document.querySelectorAll('.color-dot').forEach(d => {
+            d.classList.toggle('selected', d.dataset.color === s.color);
+        });
+    }
+
     // Presets
     if (!rendered.presets && s.presets) {
         renderPresets(s.presets, s.active_preset);
@@ -281,7 +305,9 @@ function renderPresets(presets, active) {
             await api('/preset', 'POST', { preset: key });
             document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            setTimeout(() => { rendered.profiles = false; fetchStatus(); }, 150);
+            // Sofort alle UIs aktualisieren (Slider, Toggles, Farben)
+            rendered.profiles = false;
+            fetchStatus();
         });
         grid.appendChild(card);
     });
@@ -314,6 +340,7 @@ function renderProfiles(profiles, active) {
             await api('/profile', 'POST', { profile: key });
             document.querySelectorAll('.profile-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
+            fetchStatus();  // sofort UI-Update
         });
         grid.appendChild(card);
     });
