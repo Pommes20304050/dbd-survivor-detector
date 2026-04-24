@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DBD Survivor Detector — Live Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-scanlines"></div>
+
+  <header class="topbar">
+    <div class="logo">
+      <span class="logo-icon">⬢</span>
+      <span class="logo-text">DBD <b>SURVIVOR</b> DETECTOR</span>
+    </div>
+    <div class="model-badge" id="modelBadge">
+      <span class="pulse"></span>
+      <span id="modelName">loading...</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Status Hero -->
+    <section class="hero">
+      <div class="hero-status">
+        <div class="status-dot" id="statusDot"></div>
+        <div>
+          <div class="status-label">STATUS</div>
+          <div class="status-text" id="statusText">BEREIT</div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-start" id="btnStart">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+          <span>START</span>
+        </button>
+        <button class="btn btn-stop" id="btnStop">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>
+          <span>STOP</span>
+        </button>
+        <button class="btn btn-shutdown" id="btnShutdown" title="Alles beenden">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+          <span>EXIT</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Stats Grid -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">◉</div>
+        <div class="stat-value" id="statFps">0.0</div>
+        <div class="stat-label">FPS LIVE</div>
+        <div class="stat-sub" id="statAvgFps">Ø 0.0</div>
+      </div>
+      <div class="stat-card accent-cyan">
+        <div class="stat-icon">◎</div>
+        <div class="stat-value" id="statDetections">0</div>
+        <div class="stat-label">AKTUELL SICHTBAR</div>
+        <div class="stat-sub">Survivors</div>
+      </div>
+      <div class="stat-card accent-purple">
+        <div class="stat-icon">∑</div>
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">GESAMT</div>
+        <div class="stat-sub" id="statFrames">0 Frames</div>
+      </div>
+      <div class="stat-card accent-orange">
+        <div class="stat-icon">◷</div>
+        <div class="stat-value" id="statUptime">0s</div>
+        <div class="stat-label">SESSION</div>
+        <div class="stat-sub">Laufzeit</div>
+      </div>
+    </section>
+
+    <!-- FPS Chart -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>FPS VERLAUF</h2>
+        <div class="panel-sub">Letzte 60 Messungen</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="fpsChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>EINSTELLUNGEN</h2>
+        <div class="panel-sub">Live konfigurierbar</div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">Confidence Threshold</div>
+            <div class="setting-desc">Minimum Wahrscheinlichkeit für Erkennung</div>
+          </div>
+          <div class="setting-control">
+            <input type="range" id="confSlider" min="0.05" max="0.95" step="0.05" value="0.3">
+            <span class="setting-value" id="confValue">30%</span>
+          </div>
+        </label>
+
+        <label class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">Box-Farbe</div>
+            <div class="setting-desc">Farbe der Erkennungs-Rahmen</div>
+          </div>
+          <div class="setting-control color-picker">
+            <button class="color-dot" data-color="#00ff88" style="background:#00ff88"></button>
+            <button class="color-dot" data-color="#00d4ff" style="background:#00d4ff"></button>
+            <button class="color-dot" data-color="#ff00aa" style="background:#ff00aa"></button>
+            <button class="color-dot" data-color="#ffaa00" style="background:#ffaa00"></button>
+            <button class="color-dot" data-color="#ff2244" style="background:#ff2244"></button>
+            <button class="color-dot" data-color="#ffffff" style="background:#ffffff"></button>
+          </div>
+        </label>
+
+        <label class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">Labels zeigen</div>
+            <div class="setting-desc">"SURVIVOR xx%" über der Box</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle">
+              <input type="checkbox" id="toggleLabels" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </label>
+
+        <label class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">Crosshair anzeigen</div>
+            <div class="setting-desc">Fadenkreuz in der Mitte</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle">
+              <input type="checkbox" id="toggleCrosshair" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </label>
+
+        <label class="setting-row">
+          <div class="setting-info">
+            <div class="setting-title">HUD-Regionen anzeigen</div>
+            <div class="setting-desc">Gefilterte Bereiche (Debug)</div>
+          </div>
+          <div class="setting-control">
+            <label class="toggle">
+              <input type="checkbox" id="toggleHud">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <!-- Info Panel -->
+    <section class="panel info-panel">
+      <div class="panel-header">
+        <h2>INFO</h2>
+      </div>
+      <div class="info-content">
+        <div class="info-row">
+          <span class="info-key">Modell:</span>
+          <span class="info-val" id="infoModel">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Auflösung:</span>
+          <span class="info-val">1280×1280 (TTA)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Overlay:</span>
+          <span class="info-val">Transparent, always on top</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Port:</span>
+          <span class="info-val">8765</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>DBD Survivor Detector v3 · All Rights Reserved</span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
