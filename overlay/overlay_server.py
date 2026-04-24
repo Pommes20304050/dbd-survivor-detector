@@ -10,11 +10,21 @@ Nutzung:
   python overlay_server.py     (oder start_v3.bat)
 """
 
+import os
 import sys
 import threading
 import time
 from collections import deque
 from pathlib import Path
+
+# PyTorch CUDA-DLLs auch fuer ONNX/TRT nutzbar machen
+try:
+    import torch
+    _torch_lib = os.path.join(os.path.dirname(torch.__file__), 'lib')
+    if os.path.isdir(_torch_lib):
+        os.add_dll_directory(_torch_lib)
+except Exception:
+    pass
 
 import numpy as np
 import cv2
@@ -30,8 +40,26 @@ from flask_cors import CORS
 
 # ─── Konfiguration ────────────────────────────────────────────────────────
 
-BASE_DIR    = Path(__file__).resolve().parent.parent
-MODEL_PATH  = BASE_DIR / 'models' / 'best.pt'
+BASE_DIR     = Path(__file__).resolve().parent.parent
+MODELS_DIR   = BASE_DIR / 'models'
+ENGINE_PATH  = MODELS_DIR / 'best.engine'  # TensorRT (schnellste)
+ONNX_PATH    = MODELS_DIR / 'best.onnx'    # ONNX
+PT_PATH      = MODELS_DIR / 'best.pt'      # PyTorch (Fallback)
+
+# Prioritaet: TensorRT > PyTorch > ONNX
+if ENGINE_PATH.exists():
+    MODEL_PATH = ENGINE_PATH
+    MODEL_TYPE = 'TensorRT FP16 (2x schneller)'
+elif PT_PATH.exists():
+    MODEL_PATH = PT_PATH
+    MODEL_TYPE = 'PyTorch'
+elif ONNX_PATH.exists():
+    MODEL_PATH = ONNX_PATH
+    MODEL_TYPE = 'ONNX'
+else:
+    MODEL_PATH = PT_PATH
+    MODEL_TYPE = 'COCO Basis (kein eigenes Modell)'
+
 INFER_IMGSZ = 1280
 PORT        = 8765
 
@@ -78,8 +106,8 @@ class DetectionEngine(threading.Thread):
 
     def _load_model(self):
         if MODEL_PATH.exists():
-            print(f"[Engine] Lade Modell: {MODEL_PATH}")
-            self.model = YOLO(str(MODEL_PATH))
+            print(f"[Engine] Lade Modell: {MODEL_PATH.name}  ({MODEL_TYPE})")
+            self.model = YOLO(str(MODEL_PATH), task='detect')
             self.classes = None
         else:
             print(f"[Engine] Kein eigenes Modell — nutze COCO")
