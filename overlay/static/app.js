@@ -168,13 +168,19 @@ function updateUI(s) {
     set('btnStop', 'disabled', !running);
 
     // GPU + CPU Chips im Topbar
-    const gpuShort = (gpu.name || 'GPU').replace('NVIDIA GeForce ', '').replace(' SUPER', '+').trim();
+    const gpuShort = (gpu.name || 'GPU').replace('NVIDIA GeForce ', '').trim();
     set('gpuName', 'textContent', gpuShort);
     set('gpuPct', 'textContent', `${gpu.util || 0}%`);
 
     const cpu = s.cpu || {};
-    const cpuShort = (cpu.name || 'CPU').split('@')[0].replace('Intel(R) Core(TM) ', '').replace('(R)', '').trim();
-    set('cpuName', 'textContent', cpuShort);
+    const cpuShort = (cpu.name || 'CPU')
+        .split('@')[0]
+        .replace('Intel(R) Core(TM) ', '')
+        .replace('(R)', '')
+        .replace('(TM)', '')
+        .replace('CPU', '')
+        .trim();
+    set('cpuName', 'textContent', cpuShort || 'CPU');
     set('cpuPct', 'textContent', `${(cpu.util || 0).toFixed(0)}%`);
 
     // Chart data push

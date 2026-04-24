@@ -39,17 +39,47 @@ except ImportError:
     DXCAM_AVAILABLE = False
 
 import psutil
+import platform
 
-# CPU Infos einmal holen
-try:
-    _CPU_NAME = 'CPU'
-    import subprocess
-    res = subprocess.run(['wmic', 'cpu', 'get', 'Name'], capture_output=True, text=True, timeout=3)
-    lines = [l.strip() for l in res.stdout.splitlines() if l.strip() and 'Name' not in l]
-    if lines:
-        _CPU_NAME = lines[0]
-except Exception:
-    _CPU_NAME = f'CPU ({psutil.cpu_count()}C)'
+def _detect_cpu_name():
+    # 1) PowerShell (wmic ist deprecated)
+    try:
+        import subprocess
+        res = subprocess.run(
+            ['powershell', '-NoProfile', '-Command',
+             '(Get-CimInstance -ClassName Win32_Processor).Name'],
+            capture_output=True, text=True, timeout=3
+        )
+        name = res.stdout.strip().splitlines()[-1].strip() if res.stdout else ''
+        if name and 'Get-CimInstance' not in name:
+            return name
+    except Exception:
+        pass
+
+    # 2) platform.processor
+    try:
+        name = platform.processor()
+        if name and 'Intel' in name or 'AMD' in name:
+            return name
+    except Exception:
+        pass
+
+    # 3) Registry
+    try:
+        import winreg
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+            r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
+        val, _ = winreg.QueryValueEx(key, "ProcessorNameString")
+        winreg.CloseKey(key)
+        if val:
+            return val.strip()
+    except Exception:
+        pass
+
+    return f'CPU ({psutil.cpu_count()} Threads)'
+
+_CPU_NAME = _detect_cpu_name()
+print(f"[Init] CPU: {_CPU_NAME}")
 
 
 def get_cpu_stats():
