@@ -65,6 +65,63 @@ PORT        = 8765
 
 # Performance-Profile: Auflösung → geschätzte VRAM + FPS + Qualität
 # (basierend auf Benchmarks deiner RTX 4070 Super mit v3 Modell)
+# Presets für Anfänger — bundelt alle Settings zusammen
+SIMPLE_PRESETS = {
+    'standard': {
+        'name':    'Standard',
+        'emoji':   '◉',
+        'desc':    'Empfohlen für alle — ausbalanciert',
+        'profile':         'high',
+        'conf':            0.35,
+        'show_labels':     True,
+        'show_crosshair':  True,
+        'show_hud_regions': False,
+        'color':           '#00ff88',
+        'box_thickness':   3,
+        'glow':            True,
+    },
+    'competitive': {
+        'name':    'Competitive',
+        'emoji':   '◆',
+        'desc':    'Maximale Genauigkeit für serious Gameplay',
+        'profile':         'ultra',
+        'conf':            0.40,
+        'show_labels':     True,
+        'show_crosshair':  True,
+        'show_hud_regions': False,
+        'color':           '#00d4ff',
+        'box_thickness':   4,
+        'glow':            True,
+    },
+    'minimal': {
+        'name':    'Minimal',
+        'emoji':   '○',
+        'desc':    'Leichtgewichtig, für schwache PCs',
+        'profile':         'fast',
+        'conf':            0.30,
+        'show_labels':     False,
+        'show_crosshair':  False,
+        'show_hud_regions': False,
+        'color':           '#ffffff',
+        'box_thickness':   2,
+        'glow':            False,
+    },
+    'stream': {
+        'name':    'Stream',
+        'emoji':   '●',
+        'desc':    'Clean Look für Streaming & Videos',
+        'profile':         'high',
+        'conf':            0.50,
+        'show_labels':     False,
+        'show_crosshair':  False,
+        'show_hud_regions': False,
+        'color':           '#00d4ff',
+        'box_thickness':   3,
+        'glow':            True,
+    },
+}
+
+
 PERFORMANCE_PROFILES = {
     'ultra': {
         'name':        'Ultra',
@@ -143,7 +200,14 @@ class State:
     session_start    = None
     fps_history      = deque(maxlen=60)
     profile          = 'ultra'
-    current_frame    = None   # Raw frame fuer Live-Stream
+    current_frame    = None
+    # Erweiterte Optionen
+    box_thickness    = 3
+    glow             = True
+    show_conf        = True
+    min_box_size     = 400       # Minimum Box-Area (px²)
+    max_detections   = 10
+    active_preset    = 'standard'
     current_boxes    = []
     current_confs    = []
     lock             = threading.Lock()
@@ -286,6 +350,16 @@ class OverlayWindow(QWidget):
             show_labels = state.show_labels
             show_hud = state.show_hud_regions
             color_hex = state.detection_color
+            box_thick = state.box_thickness
+            glow_on = state.glow
+            show_conf = state.show_conf
+            max_det = state.max_detections
+
+        # Limit
+        if len(boxes) > max_det:
+            combined = sorted(zip(confs, boxes), reverse=True)[:max_det]
+            confs = [c for c, _ in combined]
+            boxes = [b for _, b in combined]
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -321,15 +395,23 @@ class OverlayWindow(QWidget):
             intensity = int(180 + conf * 75)
             col = QColor(base_color.red(), base_color.green(), base_color.blue(), intensity)
 
+            # Glow-Effekt (wenn aktiviert)
+            if glow_on:
+                glow_col = QColor(base_color.red(), base_color.green(), base_color.blue(), 60)
+                for glow_w in range(box_thick + 6, box_thick, -2):
+                    painter.setPen(QPen(glow_col, glow_w))
+                    painter.setBrush(Qt.NoBrush)
+                    painter.drawRect(px1, py1, px2 - px1, py2 - py1)
+
             # Haupt-Box
-            pen = QPen(col, 3)
+            pen = QPen(col, box_thick)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawRect(px1, py1, px2 - px1, py2 - py1)
 
             # Ecken-Marker fuer futuristisches Aussehen
             corner_len = 20
-            pen.setWidth(5)
+            pen.setWidth(box_thick + 2)
             painter.setPen(pen)
             # Oben-links
             painter.drawLine(px1, py1, px1 + corner_len, py1)
@@ -346,7 +428,7 @@ class OverlayWindow(QWidget):
 
             # Label
             if show_labels:
-                label_text = f"SURVIVOR  {conf:.0%}"
+                label_text = f"SURVIVOR  {conf:.0%}" if show_conf else "SURVIVOR"
                 font = QFont('Consolas', 11, QFont.Bold)
                 painter.setFont(font)
                 metrics = painter.fontMetrics()
@@ -403,7 +485,36 @@ def api_status():
             'profile':          state.profile,
             'profiles':         PERFORMANCE_PROFILES,
             'trt_available':    ENGINE_PATH.exists(),
+            'box_thickness':    state.box_thickness,
+            'glow':             state.glow,
+            'show_conf':        state.show_conf,
+            'min_box_size':     state.min_box_size,
+            'max_detections':   state.max_detections,
+            'active_preset':    state.active_preset,
+            'presets':          SIMPLE_PRESETS,
         })
+
+
+@app.route('/api/preset', methods=['POST'])
+def api_preset():
+    """Wechselt zu einem Simple Preset — wendet ALLE Settings gleichzeitig an."""
+    data = request.json or {}
+    name = data.get('preset')
+    preset = SIMPLE_PRESETS.get(name)
+    if not preset:
+        return jsonify({'ok': False, 'error': 'unknown preset'}), 400
+
+    with state.lock:
+        state.active_preset    = name
+        state.profile          = preset['profile']
+        state.conf_threshold   = preset['conf']
+        state.show_labels      = preset['show_labels']
+        state.show_crosshair   = preset['show_crosshair']
+        state.show_hud_regions = preset['show_hud_regions']
+        state.detection_color  = preset['color']
+        state.box_thickness    = preset['box_thickness']
+        state.glow             = preset['glow']
+    return jsonify({'ok': True, 'preset': name})
 
 
 @app.route('/api/profile', methods=['POST'])
@@ -449,6 +560,18 @@ def api_config():
             state.show_hud_regions = bool(data['show_hud_regions'])
         if 'color' in data:
             state.detection_color = str(data['color'])
+        if 'box_thickness' in data:
+            state.box_thickness = max(1, min(10, int(data['box_thickness'])))
+        if 'glow' in data:
+            state.glow = bool(data['glow'])
+        if 'show_conf' in data:
+            state.show_conf = bool(data['show_conf'])
+        if 'min_box_size' in data:
+            state.min_box_size = max(0, int(data['min_box_size']))
+        if 'max_detections' in data:
+            state.max_detections = max(1, min(50, int(data['max_detections'])))
+        # Manuelle Änderung = custom
+        state.active_preset = 'custom'
     return jsonify({'ok': True})
 
 
