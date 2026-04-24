@@ -336,8 +336,11 @@ class State:
     min_box_size     = 400       # Minimum Box-Area (px²)
     max_detections   = 10
     active_preset    = 'competitive'
-    monitor_index    = 1    # welcher Monitor gescannt wird
-    monitors_info    = []   # Liste verfuegbarer Monitore
+    monitor_index    = 1
+    monitors_info    = []
+    # Farbfilter: lehnt Detections ab die dominant roten Inhalt haben (Killer-Stain / Aura)
+    red_filter_enabled = True
+    red_filter_threshold = 0.35   # wenn >35% der Box saturiert-rot → verwerfen
     current_boxes    = []
     current_confs    = []
     lock             = threading.Lock()
@@ -487,6 +490,36 @@ class DetectionEngine(threading.Thread):
         return self.pt_model, profile['imgsz'], augment
 
     @staticmethod
+    def _is_mostly_red(frame_bgr, box, threshold: float = 0.35) -> bool:
+        """Prueft ob die Box dominant rot ist (Killer-Stain, Aura, Blood-Effect)."""
+        x1, y1, x2, y2 = box
+        h, w = frame_bgr.shape[:2]
+        x1 = max(0, int(x1)); y1 = max(0, int(y1))
+        x2 = min(w, int(x2)); y2 = min(h, int(y2))
+        if x2 <= x1 or y2 <= y1:
+            return False
+
+        region = frame_bgr[y1:y2, x1:x2]
+        if region.size == 0:
+            return False
+
+        # Downsample fuer Speed
+        if region.shape[0] > 80 or region.shape[1] > 80:
+            region = cv2.resize(region, (64, 64), interpolation=cv2.INTER_AREA)
+
+        hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+        h_ch, s_ch, v_ch = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
+
+        # Rot liegt bei H=0-10 oder H=170-180 (OpenCV HSV: H=0-179)
+        red_hue = (h_ch <= 10) | (h_ch >= 170)
+        saturated = s_ch >= 100        # deutlich gesaettigt
+        bright = v_ch >= 60            # nicht zu dunkel
+        red_mask = red_hue & saturated & bright
+
+        red_ratio = red_mask.sum() / red_mask.size
+        return red_ratio > threshold
+
+    @staticmethod
     def _in_hud(box, w, h):
         x1, y1, x2, y2 = box
         area = (x2 - x1) * (y2 - y1)
@@ -572,11 +605,18 @@ class DetectionEngine(threading.Thread):
                     time.sleep(0.1)
                     continue
 
+                with state.lock:
+                    red_on = state.red_filter_enabled
+                    red_th = state.red_filter_threshold
+
                 boxes = []
                 confs = []
                 for box in results.boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     if self._in_hud((x1, y1, x2, y2), self.monitor_w, self.monitor_h):
+                        continue
+                    # Farbfilter: rot-dominante Boxes (Killer-Stain/Aura) verwerfen
+                    if red_on and self._is_mostly_red(frame, (x1, y1, x2, y2), red_th):
                         continue
                     boxes.append((x1, y1, x2, y2))
                     confs.append(float(box.conf[0]))
@@ -779,6 +819,8 @@ def api_status():
             'cpu':              cpu_stats,
             'monitor_index':    state.monitor_index,
             'monitors':         state.monitors_info,
+            'red_filter':       state.red_filter_enabled,
+            'red_filter_threshold': state.red_filter_threshold,
         })
 
 
@@ -878,6 +920,10 @@ def api_config():
                 state.min_box_size = max(0, int(data['min_box_size']))
             if 'max_detections' in data:
                 state.max_detections = max(1, min(50, int(data['max_detections'])))
+            if 'red_filter' in data:
+                state.red_filter_enabled = bool(data['red_filter'])
+            if 'red_filter_threshold' in data:
+                state.red_filter_threshold = max(0.1, min(0.9, float(data['red_filter_threshold'])))
             state.active_preset = 'custom'
         return jsonify({'ok': True})
     except (ValueError, TypeError) as e:

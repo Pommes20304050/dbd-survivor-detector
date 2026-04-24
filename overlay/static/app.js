@@ -107,11 +107,22 @@ $('maxDetSlider').addEventListener('input', e => {
     api('/config', 'POST', { max_detections: v });
 });
 
-['toggleLabels', 'toggleConf', 'toggleGlow', 'toggleCrosshair', 'toggleHud'].forEach(id => {
+['toggleLabels', 'toggleConf', 'toggleGlow', 'toggleCrosshair', 'toggleHud', 'toggleRed'].forEach(id => {
     const keyMap = { toggleLabels: 'show_labels', toggleConf: 'show_conf', toggleGlow: 'glow',
-                     toggleCrosshair: 'show_crosshair', toggleHud: 'show_hud_regions' };
-    $(id).addEventListener('change', e => api('/config', 'POST', { [keyMap[id]]: e.target.checked }));
+                     toggleCrosshair: 'show_crosshair', toggleHud: 'show_hud_regions',
+                     toggleRed: 'red_filter' };
+    const el_ = $(id);
+    if (el_) el_.addEventListener('change', e => api('/config', 'POST', { [keyMap[id]]: e.target.checked }));
 });
+
+const redThresh = $('redThreshSlider');
+if (redThresh) {
+    redThresh.addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        set('redThreshValue', 'textContent', `${Math.round(v * 100)}%`);
+        api('/config', 'POST', { red_filter_threshold: v });
+    });
+}
 
 // Monitor-Select
 const monitorSelect = $('monitorSelect');
@@ -248,6 +259,12 @@ function updateUI(s) {
     const tg = $('toggleGlow');      if (tg && s.glow != null) tg.checked = s.glow;
     const tx = $('toggleCrosshair'); if (tx && s.show_crosshair != null) tx.checked = s.show_crosshair;
     const th = $('toggleHud');       if (th && s.show_hud_regions != null) th.checked = s.show_hud_regions;
+    const tr = $('toggleRed');       if (tr && s.red_filter != null) tr.checked = s.red_filter;
+    const rtSl = $('redThreshSlider');
+    if (rtSl && s.red_filter_threshold != null && document.activeElement !== rtSl) {
+        rtSl.value = s.red_filter_threshold;
+        set('redThreshValue', 'textContent', `${Math.round(s.red_filter_threshold * 100)}%`);
+    }
 
     if (s.color) {
         document.querySelectorAll('.color-dot').forEach(d => {
