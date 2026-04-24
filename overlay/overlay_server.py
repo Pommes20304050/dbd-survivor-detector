@@ -68,7 +68,7 @@ def get_gpu_stats():
         return {'util': 0, 'vram_used': 0, 'vram_total': 0, 'vram_pct': 0, 'temp': 0, 'power': 0, 'name': GPU_NAME}
 
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtCore import Qt, QTimer, QRectF, pyqtSignal, QObject
+from PyQt5.QtCore import Qt, QTimer, QRectF, pyqtSignal, QObject, QMetaObject, Q_ARG
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QBrush, QPainterPath
 
 from flask import Flask, render_template, jsonify, request, Response
@@ -281,8 +281,10 @@ class DetectionEngine(threading.Thread):
             self.classes = None
 
     def _get_model(self):
-        """Waehlt Modell basierend auf aktivem Profil."""
-        profile = PERFORMANCE_PROFILES.get(state.profile, PERFORMANCE_PROFILES['ultra'])
+        """Waehlt Modell basierend auf aktivem Profil (thread-safe)."""
+        with state.lock:
+            current_profile = state.profile
+        profile = PERFORMANCE_PROFILES.get(current_profile, PERFORMANCE_PROFILES['ultra'])
         if profile['use_engine'] and self.engine_model:
             return self.engine_model, profile['imgsz']
         return self.pt_model, profile['imgsz']
@@ -305,7 +307,9 @@ class DetectionEngine(threading.Thread):
     def run(self):
         print(f"[Engine] Detection-Thread gestartet, wartet auf start...")
         with mss.mss() as sct:
-            monitor = sct.monitors[1]
+            # Robust gegen fehlende Monitore
+            mon_idx = 1 if len(sct.monitors) > 1 else 0
+            monitor = sct.monitors[mon_idx]
             self.monitor_w = monitor['width']
             self.monitor_h = monitor['height']
             print(f"[Engine] Monitor: {self.monitor_w}x{self.monitor_h}")
@@ -319,14 +323,20 @@ class DetectionEngine(threading.Thread):
                     continue
 
                 t0 = time.perf_counter()
-                frame = np.array(sct.grab(monitor))[:, :, :3]
+                try:
+                    frame = np.array(sct.grab(monitor))[:, :, :3]
 
-                model, imgsz = self._get_model()
-                results = model(
-                    frame, classes=self.classes,
-                    conf=state.conf_threshold,
-                    imgsz=imgsz, verbose=False
-                )[0]
+                    model, imgsz = self._get_model()
+                    results = model(
+                        frame, classes=self.classes,
+                        conf=state.conf_threshold,
+                        imgsz=imgsz, verbose=False
+                    )[0]
+                except Exception as e:
+                    # CUDA OOM / driver hang / model error → nicht Thread killen
+                    print(f"[Engine] Inference Fehler: {e}")
+                    time.sleep(0.5)
+                    continue
 
                 boxes = []
                 confs = []
@@ -498,6 +508,8 @@ def index():
 
 @app.route('/api/status')
 def api_status():
+    # GPU-Call ausserhalb des Locks (kann ~ms dauern)
+    gpu_stats = get_gpu_stats()
     with state.lock:
         uptime = 0
         if state.session_start:
@@ -528,14 +540,14 @@ def api_status():
             'max_detections':   state.max_detections,
             'active_preset':    state.active_preset,
             'presets':          SIMPLE_PRESETS,
-            'gpu':              get_gpu_stats(),
+            'gpu':              gpu_stats,
         })
 
 
 @app.route('/api/preset', methods=['POST'])
 def api_preset():
     """Wechselt zu einem Simple Preset — wendet ALLE Settings gleichzeitig an."""
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     name = data.get('preset')
     preset = SIMPLE_PRESETS.get(name)
     if not preset:
@@ -556,7 +568,7 @@ def api_preset():
 
 @app.route('/api/profile', methods=['POST'])
 def api_profile():
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     name = data.get('profile')
     if name not in PERFORMANCE_PROFILES:
         return jsonify({'ok': False, 'error': 'unknown profile'}), 400
@@ -583,33 +595,41 @@ def api_stop():
     return jsonify({'ok': True, 'running': False})
 
 
+import re as _re
+_HEX_COLOR_RE = _re.compile(r'^#[0-9a-fA-F]{6}$')
+
 @app.route('/api/config', methods=['POST'])
 def api_config():
-    data = request.json or {}
-    with state.lock:
-        if 'conf' in data:
-            state.conf_threshold = max(0.05, min(0.95, float(data['conf'])))
-        if 'show_crosshair' in data:
-            state.show_crosshair = bool(data['show_crosshair'])
-        if 'show_labels' in data:
-            state.show_labels = bool(data['show_labels'])
-        if 'show_hud_regions' in data:
-            state.show_hud_regions = bool(data['show_hud_regions'])
-        if 'color' in data:
-            state.detection_color = str(data['color'])
-        if 'box_thickness' in data:
-            state.box_thickness = max(1, min(10, int(data['box_thickness'])))
-        if 'glow' in data:
-            state.glow = bool(data['glow'])
-        if 'show_conf' in data:
-            state.show_conf = bool(data['show_conf'])
-        if 'min_box_size' in data:
-            state.min_box_size = max(0, int(data['min_box_size']))
-        if 'max_detections' in data:
-            state.max_detections = max(1, min(50, int(data['max_detections'])))
-        # Manuelle Änderung = custom
-        state.active_preset = 'custom'
-    return jsonify({'ok': True})
+    try:
+        data = request.get_json(silent=True) or {}
+    except Exception:
+        data = {}
+    try:
+        with state.lock:
+            if 'conf' in data:
+                state.conf_threshold = max(0.05, min(0.95, float(data['conf'])))
+            if 'show_crosshair' in data:
+                state.show_crosshair = bool(data['show_crosshair'])
+            if 'show_labels' in data:
+                state.show_labels = bool(data['show_labels'])
+            if 'show_hud_regions' in data:
+                state.show_hud_regions = bool(data['show_hud_regions'])
+            if 'color' in data and isinstance(data['color'], str) and _HEX_COLOR_RE.match(data['color']):
+                state.detection_color = data['color']
+            if 'box_thickness' in data:
+                state.box_thickness = max(1, min(10, int(data['box_thickness'])))
+            if 'glow' in data:
+                state.glow = bool(data['glow'])
+            if 'show_conf' in data:
+                state.show_conf = bool(data['show_conf'])
+            if 'min_box_size' in data:
+                state.min_box_size = max(0, int(data['min_box_size']))
+            if 'max_detections' in data:
+                state.max_detections = max(1, min(50, int(data['max_detections'])))
+            state.active_preset = 'custom'
+        return jsonify({'ok': True})
+    except (ValueError, TypeError) as e:
+        return jsonify({'ok': False, 'error': str(e)}), 400
 
 
 def mjpeg_generator():
@@ -679,8 +699,11 @@ def video_feed():
 
 @app.route('/api/shutdown', methods=['POST'])
 def api_shutdown():
-    """Komplettes Herunterfahren."""
-    threading.Timer(0.3, lambda: QApplication.instance().quit()).start()
+    """Komplettes Herunterfahren — thread-safe via Qt Signal."""
+    qapp = QApplication.instance()
+    if qapp is not None:
+        # Qt erwartet GUI-Aufrufe vom Main-Thread
+        QMetaObject.invokeMethod(qapp, 'quit', Qt.QueuedConnection)
     return jsonify({'ok': True})
 
 

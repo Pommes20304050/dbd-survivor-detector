@@ -152,7 +152,7 @@ class Monitor:
 def run_screen(monitor: Monitor):
     print("Live-Monitor (Screen) — ESC zum Beenden")
     with mss.mss() as sct:
-        mon = sct.monitors[1]
+        mon = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
         while True:
             t0 = time.perf_counter()
             raw = np.array(sct.grab(mon))[:, :, :3]

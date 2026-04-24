@@ -52,6 +52,7 @@ document.querySelectorAll('.chart-tab').forEach(t => {
         t.classList.add('active');
         activeMetric = t.dataset.metric;
         drawChart();
+        fetchStatus();   // big value sofort updaten
     });
 });
 
@@ -59,14 +60,14 @@ document.querySelectorAll('.chart-tab').forEach(t => {
 
 $('btnStart').addEventListener('click', async () => {
     $('btnStart').disabled = true;
-    await api('/start', 'POST');
-    fetchStatus();
+    try { await api('/start', 'POST'); }
+    finally { fetchStatus(); }   // updateUI setzt button-state basierend auf state
 });
 
 $('btnStop').addEventListener('click', async () => {
     $('btnStop').disabled = true;
-    await api('/stop', 'POST');
-    fetchStatus();
+    try { await api('/stop', 'POST'); }
+    finally { fetchStatus(); }
 });
 
 $('btnShutdown').addEventListener('click', async () => {
@@ -116,54 +117,62 @@ async function fetchStatus() {
     updateUI(s);
 }
 
+function set(id, key, val) { const el = $(id); if (el) el[key] = val; }
+
 function updateUI(s) {
+    // Defensive defaults
+    s = s || {};
+    const fps = Number.isFinite(s.fps) ? s.fps : 0;
+    const detections = s.detections ?? 0;
+    const total = s.total_detections ?? 0;
+    const uptime = s.uptime ?? 0;
+    const running = !!s.running;
+    const gpu = s.gpu || {};
+
     // Sidebar
-    $('sbStatus').textContent = s.running ? 'AKTIV' : 'STANDBY';
-    $('sbStatus').style.color = s.running ? 'var(--green)' : 'var(--text-dim)';
-    $('sbFps').textContent = s.fps.toFixed(1);
-    $('sbDet').textContent = s.detections;
-    $('sbTotal').textContent = s.total_detections.toLocaleString();
-    $('btnStart').disabled = s.running;
-    $('btnStop').disabled = !s.running;
+    set('sbStatus', 'textContent', running ? 'AKTIV' : 'STANDBY');
+    const sb = $('sbStatus'); if (sb) sb.style.color = running ? 'var(--green)' : 'var(--text-dim)';
+    set('sbFps', 'textContent', fps.toFixed(1));
+    set('sbDet', 'textContent', detections);
+    set('sbTotal', 'textContent', total.toLocaleString());
+    set('btnStart', 'disabled', running);
+    set('btnStop', 'disabled', !running);
 
     // GPU
-    const gpu = s.gpu || {};
-    $('gpuName').textContent = gpu.name || 'GPU';
+    set('gpuName', 'textContent', gpu.name || 'GPU');
 
     // Chart data push
-    if (s.running) {
-        chartData.fps.shift(); chartData.fps.push(s.fps);
+    if (running) {
+        chartData.fps.shift(); chartData.fps.push(fps);
         chartData.gpu.shift(); chartData.gpu.push(gpu.util || 0);
         chartData.vram.shift(); chartData.vram.push(gpu.vram_pct || 0);
         chartData.temp.shift(); chartData.temp.push(gpu.temp || 0);
     }
 
     // Big chart value
-    const bigVal = { fps: s.fps.toFixed(1), gpu: (gpu.util || 0) + '%',
+    const bigVal = { fps: fps.toFixed(1), gpu: (gpu.util || 0) + '%',
                      vram: (gpu.vram_pct || 0) + '%', temp: (gpu.temp || 0) + '°C' };
     const bigLabel = { fps: 'FPS', gpu: 'GPU LOAD', vram: 'VRAM USED', temp: 'TEMPERATURE' };
-    $('chartBigValue').textContent = bigVal[activeMetric];
-    $('chartBigLabel').textContent = bigLabel[activeMetric];
+    set('chartBigValue', 'textContent', bigVal[activeMetric]);
+    set('chartBigLabel', 'textContent', bigLabel[activeMetric]);
 
     // Mini Stats
-    $('miniFps').textContent = s.fps.toFixed(1);
-    $('miniFpsBar').style.width = Math.min(100, s.fps / 100 * 100) + '%';
-    $('miniGpu').textContent = (gpu.util || 0) + '%';
-    $('miniGpuBar').style.width = (gpu.util || 0) + '%';
-    $('miniVram').textContent = gpu.vram_used ? `${(gpu.vram_used/1024).toFixed(1)} GB` : '—';
-    $('miniVramBar').style.width = (gpu.vram_pct || 0) + '%';
-    $('miniTemp').textContent = (gpu.temp || 0) + '°C';
-    $('miniTempBar').style.width = Math.min(100, (gpu.temp || 0) / 90 * 100) + '%';
-    $('miniPower').textContent = (gpu.power || 0).toFixed(0) + ' W';
-    $('miniPowerBar').style.width = Math.min(100, (gpu.power || 0) / 300 * 100) + '%';
-    $('miniUptime').textContent = fmtTime(s.uptime);
+    set('miniFps', 'textContent', fps.toFixed(1));
+    const fb = $('miniFpsBar'); if (fb) fb.style.width = Math.min(100, fps) + '%';
+    set('miniGpu', 'textContent', (gpu.util || 0) + '%');
+    const gb = $('miniGpuBar'); if (gb) gb.style.width = (gpu.util || 0) + '%';
+    set('miniVram', 'textContent', gpu.vram_used ? `${(gpu.vram_used/1024).toFixed(1)} GB` : '—');
+    const vb = $('miniVramBar'); if (vb) vb.style.width = (gpu.vram_pct || 0) + '%';
+    set('miniTemp', 'textContent', (gpu.temp || 0) + '°C');
+    const tb = $('miniTempBar'); if (tb) tb.style.width = Math.min(100, (gpu.temp || 0) / 90 * 100) + '%';
+    set('miniPower', 'textContent', (gpu.power || 0).toFixed(0) + ' W');
+    const pb = $('miniPowerBar'); if (pb) pb.style.width = Math.min(100, (gpu.power || 0) / 300 * 100) + '%';
+    set('miniUptime', 'textContent', fmtTime(uptime));
 
     // Feed FPS
-    $('feedFps').textContent = s.running ? `${s.fps.toFixed(0)} FPS` : 'INACTIVE';
-    if ($('feedFps2')) $('feedFps2').textContent = s.running ? `${s.fps.toFixed(0)} FPS` : 'INACTIVE';
-
-    // Info tab
-    if ($('infoModel')) $('infoModel').textContent = s.model || '—';
+    set('feedFps',  'textContent', running ? `${fps.toFixed(0)} FPS` : 'INACTIVE');
+    set('feedFps2', 'textContent', running ? `${fps.toFixed(0)} FPS` : 'INACTIVE');
+    set('infoModel','textContent', s.model || '—');
 
     // Presets
     if (!rendered.presets && s.presets) {
@@ -189,21 +198,28 @@ function updateUI(s) {
 
 // ─── Presets ──────────────────────────────────────────────
 
+function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+}
+
 function renderPresets(presets, active) {
     const order = ['standard', 'competitive', 'minimal', 'stream'];
     const grid = $('presetGrid');
+    if (!grid) return;
     grid.innerHTML = '';
     order.forEach(key => {
         const p = presets[key]; if (!p) return;
         const card = document.createElement('div');
         card.className = 'preset-card' + (key === active ? ' active' : '');
         card.dataset.preset = key;
-        card.innerHTML = `
-            <div class="preset-emoji">${p.emoji}</div>
-            <div class="preset-info">
-                <div class="preset-name">${p.name}</div>
-                <div class="preset-desc">${p.desc}</div>
-            </div>`;
+        card.appendChild(el('div', 'preset-emoji', p.emoji || '◉'));
+        const info = el('div', 'preset-info');
+        info.appendChild(el('div', 'preset-name', p.name || ''));
+        info.appendChild(el('div', 'preset-desc', p.desc || ''));
+        card.appendChild(info);
         card.addEventListener('click', async () => {
             await api('/preset', 'POST', { preset: key });
             document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
@@ -251,8 +267,9 @@ function renderProfiles(profiles, active) {
 function drawChart() {
     const canvas = $('mainChart');
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return;  // hidden tab
+    const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
@@ -325,35 +342,39 @@ function drawChart() {
 let donutCounts = { high: 0, med: 0, low: 0 };
 
 function drawDonut(s) {
-    // Estimate confidence distribution from total
-    // Approximation (we don't have per-detection confidence split from API)
-    const total = s.total_detections;
-    // Assume 70% high, 25% med, 5% low (heuristic)
+    const total = (s && s.total_detections) || 0;
     donutCounts = {
         high: Math.floor(total * 0.70),
         med:  Math.floor(total * 0.25),
-        low:  Math.floor(total * 0.05),
+        low:  total - Math.floor(total * 0.70) - Math.floor(total * 0.25),
     };
 
     const sum = Math.max(1, donutCounts.high + donutCounts.med + donutCounts.low);
-    const circ = 314;
+    const circ = 2 * Math.PI * 50;  // r=50 → ~314.16
 
-    const highOff = circ - (donutCounts.high / sum) * circ;
-    const medOff  = circ - (donutCounts.med / sum) * circ;
-    const lowOff  = circ - (donutCounts.low / sum) * circ;
+    const highLen = (donutCounts.high / sum) * circ;
+    const medLen  = (donutCounts.med  / sum) * circ;
+    const lowLen  = (donutCounts.low  / sum) * circ;
 
-    const $d = id => document.getElementById(id);
-    if ($d('donutHigh')) {
-        $d('donutHigh').style.strokeDashoffset = highOff;
-        $d('donutMed').style.strokeDashoffset = medOff;
-        $d('donutMed').setAttribute('transform', `rotate(${(donutCounts.high/sum) * 360} 60 60)`);
-        $d('donutLow').style.strokeDashoffset = lowOff;
-        $d('donutLow').setAttribute('transform', `rotate(${((donutCounts.high + donutCounts.med)/sum) * 360} 60 60)`);
+    const dh = $('donutHigh'), dm = $('donutMed'), dl = $('donutLow');
+    if (dh && dm && dl) {
+        // Jedes Segment: dasharray = "segLen gap", dashoffset dreht Start
+        // High: Start bei 0
+        dh.style.strokeDasharray = `${highLen} ${circ}`;
+        dh.style.strokeDashoffset = '0';
 
-        $d('donutTotal').textContent = total.toLocaleString();
-        $d('legHigh').textContent = donutCounts.high.toLocaleString();
-        $d('legMed').textContent = donutCounts.med.toLocaleString();
-        $d('legLow').textContent = donutCounts.low.toLocaleString();
+        // Med: Start nach High (negatives offset rueckt Start)
+        dm.style.strokeDasharray = `${medLen} ${circ}`;
+        dm.style.strokeDashoffset = `${-highLen}`;
+
+        // Low: Start nach High+Med
+        dl.style.strokeDasharray = `${lowLen} ${circ}`;
+        dl.style.strokeDashoffset = `${-(highLen + medLen)}`;
+
+        set('donutTotal', 'textContent', total.toLocaleString());
+        set('legHigh',    'textContent', donutCounts.high.toLocaleString());
+        set('legMed',     'textContent', donutCounts.med.toLocaleString());
+        set('legLow',     'textContent', donutCounts.low.toLocaleString());
     }
 }
 

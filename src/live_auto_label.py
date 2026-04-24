@@ -103,8 +103,19 @@ def main(interval: float, conf: float):
     hotkey_listener.start()
     print(f"[Live-Label] Globaler Hotkey aktiv: F = Force-Capture (auch aus DBD!)")
 
+    def _unique_name(base_dir: Path, prefix: str, ext: str = '.jpg') -> Path:
+        """Erzeugt garantiert einzigartigen Dateinamen."""
+        ts = datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
+        path = base_dir / f"{prefix}_{ts}{ext}"
+        n = 0
+        while path.exists():
+            n += 1
+            path = base_dir / f"{prefix}_{ts}_{n}{ext}"
+        return path
+
     with mss.mss() as sct:
-        monitor = sct.monitors[CAPTURE_IDX]
+        cap_idx = CAPTURE_IDX if len(sct.monitors) > CAPTURE_IDX else 0
+        monitor = sct.monitors[cap_idx]
 
         # Fenster-Position auf 2. Monitor wenn verfügbar
         window_name = 'Live Auto-Label'
@@ -149,9 +160,9 @@ def main(interval: float, conf: float):
                 next_shot = now + interval
 
                 if valid_dets:
-                    ts = datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
-                    fname = f"live_{ts}.jpg"
-                    cv2.imwrite(str(IMG_DIR / fname), frame,
+                    img_path = _unique_name(IMG_DIR, 'live')
+                    fname = img_path.name
+                    cv2.imwrite(str(img_path), frame,
                                 [cv2.IMWRITE_JPEG_QUALITY, 90])
                     with open(LBL_DIR / (Path(fname).stem + '.txt'), 'w') as f:
                         for x1, y1, x2, y2, _ in valid_dets:
@@ -243,9 +254,9 @@ def main(interval: float, conf: float):
             trigger_force = force_flag.is_set() or key == ord('f') or key == ord('F')
             if trigger_force:
                 force_flag.clear()
-                ts = datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
-                fname = f"forced_{ts}.jpg"
-                cv2.imwrite(str(RAW_DIR / fname), frame,
+                img_path = _unique_name(RAW_DIR, 'forced')
+                fname = img_path.name
+                cv2.imwrite(str(img_path), frame,
                             [cv2.IMWRITE_JPEG_QUALITY, 92])
                 forced += 1
                 print(f"  [FORCE] {fname} → data/raw/  ({forced} insgesamt)")

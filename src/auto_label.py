@@ -77,22 +77,39 @@ def label_video(video_path: Path, model, classes, fps_sample: float,
         return 0
 
     video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-    total     = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    step      = max(1, int(video_fps / fps_sample))
-    n_candidates = total // step
+    import math as _math
+    total_raw = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    video_fps_val = cap.get(cv2.CAP_PROP_FPS)
+    if not video_fps_val or _math.isnan(video_fps_val) or video_fps_val <= 0:
+        video_fps_val = 30.0
+    total     = int(total_raw) if total_raw and total_raw > 0 else 0
+    step      = max(1, int(video_fps_val / max(fps_sample, 0.1)))
+    n_candidates = max(1, total // step)
 
-    prefix = video_path.stem[:30].replace(' ', '_').replace('[', '').replace(']', '')
+    # Hash im Prefix gegen Filename-Kollisionen bei aehnlichen Video-Namen
+    import hashlib
+    name_hash = hashlib.md5(str(video_path).encode()).hexdigest()[:6]
+    stem_clean = video_path.stem[:30].replace(' ', '_').replace('[', '').replace(']', '')
+    prefix = f"{stem_clean}_{name_hash}"
+
     saved  = 0
     idx    = 0
     skipped_no_det = 0
+    read_failures  = 0
 
-    print(f"\n[AutoLabel] {video_path.name}  →  ~{n_candidates:,} Kandidaten")
+    print(f"\n[AutoLabel] {video_path.name}  |  ~{n_candidates:,} Kandidaten  |  step={step}")
 
+    # SEEK statt jeden Frame decodieren → 10-50x schneller
     while saved < max_per_video:
+        target = idx * step
+        if total and target >= total:
+            break
+        cap.set(cv2.CAP_PROP_POS_FRAMES, target)
         ret, frame = cap.read()
         if not ret:
-            break
-        if idx % step != 0:
+            read_failures += 1
+            if read_failures > 5:
+                break
             idx += 1
             continue
         idx += 1
