@@ -605,12 +605,179 @@ footer {
   z-index: 2;
 }
 
+/* ─── Grid Layout ─────────────────────────────────────────── */
+
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+}
+
+/* ─── Live Mirror ─────────────────────────────────────────── */
+
+.mirror-container {
+  position: relative;
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--border);
+}
+
+.mirror-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.mirror-overlay-text {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--primary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border: 1px solid var(--primary);
+  backdrop-filter: blur(4px);
+}
+
+.mirror-container::before {
+  content: "◉ LIVE";
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 34, 68, 0.15);
+  color: var(--danger);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border: 1px solid rgba(255, 34, 68, 0.5);
+  z-index: 2;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ─── Performance Profile Grid ────────────────────────────── */
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.profile-card {
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(17, 22, 40, 0.9), rgba(10, 14, 31, 0.6));
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(0, 255, 136, 0.4);
+}
+
+.profile-card.active {
+  border-color: var(--primary);
+  background: linear-gradient(180deg, rgba(0, 255, 136, 0.08), rgba(10, 14, 31, 0.6));
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+}
+
+.profile-card.active::before {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.profile-name {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.profile-card.active .profile-name {
+  color: var(--primary);
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.profile-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  min-height: 30px;
+  line-height: 1.4;
+}
+
+.profile-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.profile-metric:last-of-type {
+  border-bottom: none;
+}
+
+.profile-metric-label {
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.profile-metric-value {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.profile-bar {
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.profile-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s;
+}
+
+.profile-bar-fill.vram { background: linear-gradient(90deg, var(--orange), var(--danger)); }
+.profile-bar-fill.fps { background: linear-gradient(90deg, var(--cyan), var(--primary)); }
+.profile-bar-fill.quality { background: linear-gradient(90deg, var(--purple), var(--cyan)); }
+
 /* ─── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 1000px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .hero { flex-direction: column; gap: 20px; align-items: stretch; }
   .info-content { grid-template-columns: 1fr; }
+  .grid-2col { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
