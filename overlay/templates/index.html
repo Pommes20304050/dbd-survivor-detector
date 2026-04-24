@@ -186,17 +186,24 @@
           </div>
           <div class="quick-slider">
             <div class="quick-slider-label">
-              <span>AI-Freiheit</span>
+              <span>AI-Freiheit (Confidence)</span>
               <span class="quick-slider-value" id="confValueDash">25%</span>
             </div>
-            <input type="range" id="confSliderDash" min="0.05" max="0.30" step="0.01" value="0.25">
+            <input type="range" id="confSliderDash" min="0.05" max="1.00" step="0.01" value="0.25">
             <div class="quick-slider-hint">
               <span>⚡ Mehr Survivors</span>
               <span>Präziser ◆</span>
             </div>
             <div class="quick-slider-tips">
-              <div><span class="tip-dot high"></span><b>10-20%</b> Paranoid — findet fast alles, mehr Fehler</div>
-              <div><span class="tip-dot mid"></span><b>20-30%</b> Sweet Spot für DBD — empfohlen</div>
+              <div><span class="tip-dot red"></span><b>5-15%</b> &nbsp;Paranoid — findet ALLES, viele Fehlalarme</div>
+              <div><span class="tip-dot orange"></span><b>15-30%</b> &nbsp;Sweet Spot für DBD — empfohlen ⭐</div>
+              <div><span class="tip-dot amber"></span><b>30-50%</b> &nbsp;Konservativ — nur klare Detections</div>
+              <div><span class="tip-dot gold"></span><b>50-70%</b> &nbsp;Strikt — nur sichere Survivors</div>
+              <div><span class="tip-dot white"></span><b>70-100%</b> Pure — nur 100%-Treffer, fast nichts</div>
+            </div>
+            <div class="quick-slider-note">
+              Niedriger Wert = AI zeigt auch unsichere Detections.<br>
+              Höherer Wert = nur wenn AI sich sicher ist, dass es ein Survivor ist.
             </div>
           </div>
           <div class="feed-wrap">
@@ -260,7 +267,7 @@
           <div><div class="setting-title">Confidence Threshold</div>
                <div class="setting-desc">Minimum Wahrscheinlichkeit</div></div>
           <div class="setting-ctrl">
-            <input type="range" id="confSlider" min="0.05" max="0.30" step="0.01" value="0.25">
+            <input type="range" id="confSlider" min="0.05" max="1.00" step="0.01" value="0.25">
             <span class="setting-value" id="confValue">30%</span>
           </div>
         </div>
