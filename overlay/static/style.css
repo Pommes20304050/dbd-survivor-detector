@@ -749,6 +749,40 @@ canvas#mainChart {
   letter-spacing: 0.5px;
 }
 
+.quick-slider-tips {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.quick-slider-tips div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-slider-tips b {
+  color: var(--orange);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  min-width: 55px;
+}
+
+.tip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tip-dot.high { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.tip-dot.mid  { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+
 .feed-wrap {
   position: relative;
   aspect-ratio: 16 / 9;
