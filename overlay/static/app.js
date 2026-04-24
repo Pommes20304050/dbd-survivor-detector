@@ -203,6 +203,9 @@ function updateUI(s) {
     set('feedFps2', 'textContent', running ? `${fps.toFixed(0)} FPS` : 'INACTIVE');
     set('infoModel','textContent', s.model || '—');
 
+    // Monitor-Dropdown
+    renderMonitors(s.monitors, s.monitor_index);
+
     // Presets
     if (!rendered.presets && s.presets) {
         renderPresets(s.presets, s.active_preset);
