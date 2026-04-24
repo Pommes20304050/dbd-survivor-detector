@@ -31,6 +31,8 @@ const el = {
     colorDots:       document.querySelectorAll('.color-dot'),
 
     chart: document.getElementById('fpsChart'),
+    profileGrid: document.getElementById('profileGrid'),
+    mirrorOverlay: document.getElementById('mirrorOverlay'),
 };
 
 // ─── State ────────────────────────────────────────────────
@@ -101,6 +103,22 @@ function updateUI(s) {
     el.modelName.textContent = s.model || '—';
     el.infoModel.textContent = s.model || '—';
 
+    // Mirror Status Text
+    if (el.mirrorOverlay) {
+        el.mirrorOverlay.textContent = s.running ? `${s.fps.toFixed(0)} FPS` : 'Inaktiv';
+    }
+
+    // Profile Grid (nur einmal rendern)
+    if (el.profileGrid && !el.profileGrid.dataset.rendered && s.profiles) {
+        renderProfiles(s.profiles, s.profile, s.trt_available);
+        el.profileGrid.dataset.rendered = '1';
+    } else if (el.profileGrid && s.profiles) {
+        // Aktiven Status aktualisieren
+        el.profileGrid.querySelectorAll('.profile-card').forEach(card => {
+            card.classList.toggle('active', card.dataset.profile === s.profile);
+        });
+    }
+
     // Chart data push
     if (s.running) {
         chartData.shift();
@@ -108,6 +126,72 @@ function updateUI(s) {
     }
     drawChart();
 }
+
+// ─── Profile Grid ─────────────────────────────────────────
+
+function renderProfiles(profiles, active, trtAvail) {
+    const order = ['ultra', 'high', 'balanced', 'fast', 'extreme'];
+    el.profileGrid.innerHTML = '';
+
+    order.forEach(key => {
+        const p = profiles[key];
+        if (!p) return;
+
+        const card = document.createElement('div');
+        card.className = 'profile-card' + (key === active ? ' active' : '');
+        card.dataset.profile = key;
+
+        const engineBadge = p.use_engine ? ' · TRT' : '';
+        const engineNote = p.use_engine && !trtAvail
+            ? '<div style="color:#ff9500;font-size:10px;margin-top:4px">! TRT nicht verfügbar</div>'
+            : '';
+
+        card.innerHTML = `
+            <div class="profile-name">${p.name.toUpperCase()}${engineBadge}</div>
+            <div class="profile-sub">${p.desc}</div>
+
+            <div class="profile-metric">
+                <span class="profile-metric-label">Auflösung</span>
+                <span class="profile-metric-value">${p.imgsz}px</span>
+            </div>
+
+            <div class="profile-metric">
+                <span class="profile-metric-label">VRAM</span>
+                <span class="profile-metric-value">${p.vram_mb} MB</span>
+            </div>
+            <div class="profile-bar">
+                <div class="profile-bar-fill vram" style="width:${p.vram_pct}%"></div>
+            </div>
+
+            <div class="profile-metric">
+                <span class="profile-metric-label">FPS (erwartet)</span>
+                <span class="profile-metric-value">${p.fps}</span>
+            </div>
+            <div class="profile-bar">
+                <div class="profile-bar-fill fps" style="width:${Math.min(100, p.fps/4)}%"></div>
+            </div>
+
+            <div class="profile-metric">
+                <span class="profile-metric-label">Qualität</span>
+                <span class="profile-metric-value">${p.quality_pct}%</span>
+            </div>
+            <div class="profile-bar">
+                <div class="profile-bar-fill quality" style="width:${p.quality_pct}%"></div>
+            </div>
+            ${engineNote}
+        `;
+
+        card.addEventListener('click', async () => {
+            await apiCall('/profile', 'POST', { profile: key });
+            el.profileGrid.querySelectorAll('.profile-card').forEach(c =>
+                c.classList.remove('active'));
+            card.classList.add('active');
+        });
+
+        el.profileGrid.appendChild(card);
+    });
+}
+
 
 // ─── Chart ────────────────────────────────────────────────
 

@@ -63,6 +63,61 @@ else:
 INFER_IMGSZ = 1280
 PORT        = 8765
 
+# Performance-Profile: Auflösung → geschätzte VRAM + FPS + Qualität
+# (basierend auf Benchmarks deiner RTX 4070 Super mit v3 Modell)
+PERFORMANCE_PROFILES = {
+    'ultra': {
+        'name':        'Ultra',
+        'imgsz':       1280,
+        'use_engine':  True,    # Nutzt TensorRT Engine wenn 1280
+        'vram_mb':     1500,
+        'vram_pct':    75,      # % der aktuellen GPU-Auslastung
+        'fps':         84,
+        'quality_pct': 100,
+        'desc':        'Maximale Qualität, TensorRT Engine, beste Distanz-Erkennung',
+    },
+    'high': {
+        'name':        'High',
+        'imgsz':       960,
+        'use_engine':  False,
+        'vram_mb':     1000,
+        'vram_pct':    55,
+        'fps':         130,
+        'quality_pct': 92,
+        'desc':        'Gute Qualität, schneller, für meiste Situationen ausreichend',
+    },
+    'balanced': {
+        'name':        'Balanced',
+        'imgsz':       768,
+        'use_engine':  False,
+        'vram_mb':     700,
+        'vram_pct':    40,
+        'fps':         180,
+        'quality_pct': 85,
+        'desc':        'Ausgewogen, für autonome Bots, flüssig',
+    },
+    'fast': {
+        'name':        'Fast',
+        'imgsz':       640,
+        'use_engine':  False,
+        'vram_mb':     500,
+        'vram_pct':    30,
+        'fps':         250,
+        'quality_pct': 75,
+        'desc':        'Maximum Speed, reduzierte Distanz-Erkennung',
+    },
+    'extreme': {
+        'name':        'Extreme',
+        'imgsz':       480,
+        'use_engine':  False,
+        'vram_mb':     350,
+        'vram_pct':    20,
+        'fps':         350,
+        'quality_pct': 60,
+        'desc':        'Nur Nah-Erkennung, extreme FPS für Tests',
+    },
+}
+
 HUD_REGIONS = [
     (0.00, 0.00, 0.18, 0.75),
     (0.85, 0.00, 1.00, 0.20),
@@ -87,6 +142,8 @@ class State:
     frame_count      = 0
     session_start    = None
     fps_history      = deque(maxlen=60)
+    profile          = 'ultra'
+    current_frame    = None   # Raw frame fuer Live-Stream
     current_boxes    = []
     current_confs    = []
     lock             = threading.Lock()
@@ -105,14 +162,30 @@ class DetectionEngine(threading.Thread):
         self._load_model()
 
     def _load_model(self):
-        if MODEL_PATH.exists():
-            print(f"[Engine] Lade Modell: {MODEL_PATH.name}  ({MODEL_TYPE})")
-            self.model = YOLO(str(MODEL_PATH), task='detect')
-            self.classes = None
-        else:
+        # Beide Modelle laden wenn verfuegbar
+        self.engine_model = None
+        self.pt_model = None
+
+        if ENGINE_PATH.exists():
+            print(f"[Engine] Lade TensorRT: {ENGINE_PATH.name}")
+            self.engine_model = YOLO(str(ENGINE_PATH), task='detect')
+        if PT_PATH.exists():
+            print(f"[Engine] Lade PyTorch:  {PT_PATH.name}")
+            self.pt_model = YOLO(str(PT_PATH), task='detect')
+
+        if not self.engine_model and not self.pt_model:
             print(f"[Engine] Kein eigenes Modell — nutze COCO")
-            self.model = YOLO('yolov8l.pt')
+            self.pt_model = YOLO('yolov8l.pt')
             self.classes = [0]
+        else:
+            self.classes = None
+
+    def _get_model(self):
+        """Waehlt Modell basierend auf aktivem Profil."""
+        profile = PERFORMANCE_PROFILES.get(state.profile, PERFORMANCE_PROFILES['ultra'])
+        if profile['use_engine'] and self.engine_model:
+            return self.engine_model, profile['imgsz']
+        return self.pt_model, profile['imgsz']
 
     @staticmethod
     def _in_hud(box, w, h):
@@ -148,10 +221,11 @@ class DetectionEngine(threading.Thread):
                 t0 = time.perf_counter()
                 frame = np.array(sct.grab(monitor))[:, :, :3]
 
-                results = self.model(
+                model, imgsz = self._get_model()
+                results = model(
                     frame, classes=self.classes,
                     conf=state.conf_threshold,
-                    imgsz=INFER_IMGSZ, verbose=False
+                    imgsz=imgsz, verbose=False
                 )[0]
 
                 boxes = []
@@ -169,6 +243,7 @@ class DetectionEngine(threading.Thread):
                 with state.lock:
                     state.current_boxes = boxes
                     state.current_confs = confs
+                    state.current_frame = frame   # fuer Live-Stream
                     state.detection_count = len(boxes)
                     state.total_detections += len(boxes)
                     state.frame_count += 1
@@ -325,7 +400,21 @@ def api_status():
             'color':            state.detection_color,
             'model':            MODEL_PATH.name,
             'model_exists':     MODEL_PATH.exists(),
+            'profile':          state.profile,
+            'profiles':         PERFORMANCE_PROFILES,
+            'trt_available':    ENGINE_PATH.exists(),
         })
+
+
+@app.route('/api/profile', methods=['POST'])
+def api_profile():
+    data = request.json or {}
+    name = data.get('profile')
+    if name not in PERFORMANCE_PROFILES:
+        return jsonify({'ok': False, 'error': 'unknown profile'}), 400
+    with state.lock:
+        state.profile = name
+    return jsonify({'ok': True, 'profile': name})
 
 
 @app.route('/api/start', methods=['POST'])
@@ -361,6 +450,71 @@ def api_config():
         if 'color' in data:
             state.detection_color = str(data['color'])
     return jsonify({'ok': True})
+
+
+def mjpeg_generator():
+    """Live-Stream mit gezeichneten Detections — MJPEG Format."""
+    stream_w, stream_h = 800, 450  # reduzierte Aufloesung fuer Web
+    last_frame_id = -1
+    idle_frame = np.zeros((stream_h, stream_w, 3), dtype=np.uint8)
+    cv2.putText(idle_frame, "NO SIGNAL — Press START",
+                (180, 230), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (100, 100, 100), 2)
+
+    while True:
+        with state.lock:
+            frame  = state.current_frame
+            boxes  = list(state.current_boxes)
+            confs  = list(state.current_confs)
+            frame_id = state.frame_count
+            color_hex = state.detection_color
+            running = state.running
+
+        if not running or frame is None:
+            out = idle_frame
+        else:
+            # Nur bei neuem Frame verarbeiten
+            if frame_id == last_frame_id:
+                time.sleep(0.02)
+                continue
+            last_frame_id = frame_id
+
+            # Frame verkleinern
+            img = cv2.resize(frame, (stream_w, stream_h))
+            sx = stream_w / frame.shape[1]
+            sy = stream_h / frame.shape[0]
+
+            # Farbe konvertieren (hex -> BGR)
+            try:
+                rgb = tuple(int(color_hex[i:i+2], 16) for i in (1, 3, 5))
+                color = (rgb[2], rgb[1], rgb[0])
+            except Exception:
+                color = (0, 255, 136)
+
+            # Detections zeichnen
+            for (x1, y1, x2, y2), conf in zip(boxes, confs):
+                px1 = int(x1 * sx); py1 = int(y1 * sy)
+                px2 = int(x2 * sx); py2 = int(y2 * sy)
+                cv2.rectangle(img, (px1, py1), (px2, py2), color, 2)
+                label = f"{conf:.0%}"
+                cv2.putText(img, label, (px1 + 3, py1 - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
+
+            out = img
+
+        ok, jpeg = cv2.imencode('.jpg', out, [cv2.IMWRITE_JPEG_QUALITY, 75])
+        if not ok:
+            time.sleep(0.05)
+            continue
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' +
+               jpeg.tobytes() + b'\r\n')
+
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(mjpeg_generator(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/api/shutdown', methods=['POST'])

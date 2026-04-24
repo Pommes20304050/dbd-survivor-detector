@@ -79,14 +79,38 @@
       </div>
     </section>
 
-    <!-- FPS Chart -->
+    <!-- Live Mirror + FPS Chart -->
+    <section class="grid-2col">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>LIVE MIRROR</h2>
+          <div class="panel-sub">Echtzeit-Kopie des Hauptmonitors</div>
+        </div>
+        <div class="mirror-container">
+          <img id="liveMirror" src="/video_feed" alt="Live Monitor">
+          <div class="mirror-overlay-text" id="mirrorOverlay">Inaktiv</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>FPS VERLAUF</h2>
+          <div class="panel-sub">Letzte 60 Messungen</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="fpsChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Performance Profile -->
     <section class="panel">
       <div class="panel-header">
-        <h2>FPS VERLAUF</h2>
-        <div class="panel-sub">Letzte 60 Messungen</div>
+        <h2>PERFORMANCE MODUS</h2>
+        <div class="panel-sub">VRAM & FPS anpassen</div>
       </div>
-      <div class="chart-container">
-        <canvas id="fpsChart"></canvas>
+      <div class="profile-grid" id="profileGrid">
+        <!-- wird dynamisch befuellt -->
       </div>
     </section>
 
