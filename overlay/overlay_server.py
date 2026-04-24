@@ -169,7 +169,7 @@ SIMPLE_PRESETS = {
     'maximum': {
         'name':    'MAXIMUM',
         'emoji':   '⚡',
-        'desc':    'Volle GPU-Power, 1920px + TTA, findet ALLES',
+        'desc':    'Full GPU power — 1920px + TTA, catches EVERYTHING',
         'profile':         'max',
         'conf':            0.15,
         'show_labels':     True,
@@ -182,7 +182,7 @@ SIMPLE_PRESETS = {
     'standard': {
         'name':    'Standard',
         'emoji':   '◉',
-        'desc':    'Empfohlen für alle — ausbalanciert, lockere Erkennung',
+        'desc':    'Recommended for everyone — balanced, relaxed detection',
         'profile':         'high',
         'conf':            0.22,
         'show_labels':     True,
@@ -195,7 +195,7 @@ SIMPLE_PRESETS = {
     'competitive': {
         'name':    'Competitive',
         'emoji':   '◆',
-        'desc':    'Ultra + TTA, AI denkt mehrfach nach',
+        'desc':    'Ultra + TTA — AI runs multiple passes for best accuracy',
         'profile':         'ultra',
         'conf':            0.25,
         'show_labels':     True,
@@ -208,7 +208,7 @@ SIMPLE_PRESETS = {
     'minimal': {
         'name':    'Minimal',
         'emoji':   '○',
-        'desc':    'Leichtgewichtig, für schwache PCs',
+        'desc':    'Lightweight — for weaker PCs',
         'profile':         'fast',
         'conf':            0.30,
         'show_labels':     False,
@@ -221,7 +221,7 @@ SIMPLE_PRESETS = {
     'stream': {
         'name':    'Stream',
         'emoji':   '●',
-        'desc':    'Clean Look für Streaming & Videos',
+        'desc':    'Clean look for streaming & recording',
         'profile':         'high',
         'conf':            0.50,
         'show_labels':     False,
@@ -244,7 +244,7 @@ PERFORMANCE_PROFILES = {
         'vram_pct':    95,
         'fps':         12,
         'quality_pct': 105,
-        'desc':        'GPU maxed out — höchste Qualität, beste Distanz, langsamer',
+        'desc':        'GPU maxed out — highest quality, best distance, slower',
     },
     'ultra': {
         'name':        'Ultra',
@@ -255,7 +255,7 @@ PERFORMANCE_PROFILES = {
         'vram_pct':    78,
         'fps':         60,
         'quality_pct': 102,
-        'desc':        'TensorRT + TTA — AI prüft Bild mehrfach, findet mehr Survivors',
+        'desc':        'TensorRT + TTA — multi-pass inference, catches more survivors',
     },
     'high': {
         'name':        'High',
@@ -266,7 +266,7 @@ PERFORMANCE_PROFILES = {
         'vram_pct':    55,
         'fps':         130,
         'quality_pct': 92,
-        'desc':        'Gute Qualität, schneller, für meiste Situationen ausreichend',
+        'desc':        'Good quality, faster, sufficient for most situations',
     },
     'balanced': {
         'name':        'Balanced',
@@ -277,7 +277,7 @@ PERFORMANCE_PROFILES = {
         'vram_pct':    40,
         'fps':         180,
         'quality_pct': 85,
-        'desc':        'Ausgewogen, für autonome Bots, flüssig',
+        'desc':        'Balanced — for autonomous bots, smooth',
     },
     'fast': {
         'name':        'Fast',
@@ -288,7 +288,7 @@ PERFORMANCE_PROFILES = {
         'vram_pct':    30,
         'fps':         250,
         'quality_pct': 75,
-        'desc':        'Maximum Speed, reduzierte Distanz-Erkennung',
+        'desc':        'Maximum speed, reduced distance detection',
     },
     'extreme': {
         'name':        'Extreme',
@@ -299,7 +299,7 @@ PERFORMANCE_PROFILES = {
         'vram_pct':    20,
         'fps':         350,
         'quality_pct': 60,
-        'desc':        'Nur Nah-Erkennung, extreme FPS für Tests',
+        'desc':        'Close-range only, extreme FPS for testing',
     },
 }
 
@@ -392,7 +392,7 @@ class FrameCapture(threading.Thread):
             # Monitor-Liste bereitstellen
             mons = []
             for i, m in enumerate(sct.monitors):
-                label = 'Alle' if i == 0 else f'Monitor {i}'
+                label = 'All' if i == 0 else f'Monitor {i}'
                 mons.append({'idx': i, 'name': f'{label} ({m["width"]}x{m["height"]})',
                              'width': m['width'], 'height': m['height']})
             self.monitors = mons
@@ -571,7 +571,7 @@ class DetectionEngine(threading.Thread):
             # Initialer Monitor-Check
             mons = []
             for i, m in enumerate(sct.monitors):
-                label = 'Alle' if i == 0 else f'Monitor {i}'
+                label = 'All' if i == 0 else f'Monitor {i}'
                 mons.append({'idx': i, 'name': f'{label} ({m["width"]}x{m["height"]})',
                              'width': m['width'], 'height': m['height']})
             with state.lock:

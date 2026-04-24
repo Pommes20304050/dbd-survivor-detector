@@ -71,7 +71,7 @@ $('btnStop').addEventListener('click', async () => {
 });
 
 $('btnShutdown').addEventListener('click', async () => {
-    if (!confirm('Wirklich alles beenden?')) return;
+    if (!confirm('Really shut down everything?')) return;
     await api('/shutdown', 'POST');
 });
 
@@ -182,7 +182,7 @@ function updateUI(s) {
     const gpu = s.gpu || {};
 
     // Sidebar
-    set('sbStatus', 'textContent', running ? 'AKTIV' : 'STANDBY');
+    set('sbStatus', 'textContent', running ? 'ACTIVE' : 'STANDBY');
     const sb = $('sbStatus'); if (sb) sb.style.color = running ? 'var(--green)' : 'var(--text-dim)';
     set('sbFps', 'textContent', fps.toFixed(1));
     set('sbDet', 'textContent', detections);

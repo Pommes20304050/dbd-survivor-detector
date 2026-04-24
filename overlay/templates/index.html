@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -92,7 +92,7 @@
           <div class="card-head">
             <div>
               <div class="card-title">Performance Monitor</div>
-              <div class="card-sub">Echtzeit GPU + Detection Metrics</div>
+              <div class="card-sub">Real-time GPU + detection metrics</div>
             </div>
             <div class="chart-tabs">
               <button class="chart-tab active" data-metric="fps">FPS</button>
@@ -109,12 +109,12 @@
           </div>
         </div>
 
-        <!-- Token Allocation Style: Detection Quality Donut -->
+        <!-- Donut Card -->
         <div class="card card-donut">
           <div class="card-head">
             <div>
               <div class="card-title">Detection Quality</div>
-              <div class="card-sub">Confidence-Verteilung</div>
+              <div class="card-sub">Confidence distribution</div>
             </div>
           </div>
           <div class="donut-wrap">
@@ -136,7 +136,7 @@
           </div>
         </div>
 
-        <!-- Top Stats Row -->
+        <!-- Stats Row -->
         <div class="stats-row">
           <div class="mini-stat">
             <div class="mini-label">FPS</div>
@@ -175,7 +175,7 @@
           <div class="card-head">
             <div>
               <div class="card-title">Live Neural Feed</div>
-              <div class="card-sub">AI-Boxes auf ausgewähltem Monitor</div>
+              <div class="card-sub">AI boxes on selected monitor</div>
             </div>
             <div class="feed-actions">
               <select class="monitor-select" id="monitorSelect">
@@ -186,24 +186,24 @@
           </div>
           <div class="quick-slider">
             <div class="quick-slider-label">
-              <span>AI-Freiheit (Confidence)</span>
+              <span>AI Freedom (Confidence)</span>
               <span class="quick-slider-value" id="confValueDash">25%</span>
             </div>
             <input type="range" id="confSliderDash" min="0.05" max="1.00" step="0.01" value="0.25">
             <div class="quick-slider-hint">
-              <span>⚡ Mehr Survivors</span>
-              <span>Präziser ◆</span>
+              <span>⚡ More Survivors</span>
+              <span>More Precise ◆</span>
             </div>
             <div class="quick-slider-tips">
-              <div><span class="tip-dot red"></span><b>5-15%</b> &nbsp;Paranoid — findet ALLES, viele Fehlalarme</div>
-              <div><span class="tip-dot orange"></span><b>15-30%</b> &nbsp;Sweet Spot für DBD — empfohlen ⭐</div>
-              <div><span class="tip-dot amber"></span><b>30-50%</b> &nbsp;Konservativ — nur klare Detections</div>
-              <div><span class="tip-dot gold"></span><b>50-70%</b> &nbsp;Strikt — nur sichere Survivors</div>
-              <div><span class="tip-dot white"></span><b>70-100%</b> Pure — nur 100%-Treffer, fast nichts</div>
+              <div><span class="tip-dot red"></span><b>5-15%</b> &nbsp;Paranoid — catches EVERYTHING, many false positives</div>
+              <div><span class="tip-dot orange"></span><b>15-30%</b> &nbsp;Sweet spot for DBD — recommended ⭐</div>
+              <div><span class="tip-dot amber"></span><b>30-50%</b> &nbsp;Conservative — only clear detections</div>
+              <div><span class="tip-dot gold"></span><b>50-70%</b> &nbsp;Strict — only high-confidence survivors</div>
+              <div><span class="tip-dot white"></span><b>70-100%</b> Pure — only 100% matches, almost nothing</div>
             </div>
             <div class="quick-slider-note">
-              Niedriger Wert = AI zeigt auch unsichere Detections.<br>
-              Höherer Wert = nur wenn AI sich sicher ist, dass es ein Survivor ist.
+              Lower = AI shows uncertain detections too.<br>
+              Higher = AI shows only when very confident it's a survivor.
             </div>
           </div>
           <div class="feed-wrap">
@@ -215,7 +215,7 @@
           <div class="card-head">
             <div>
               <div class="card-title">Quick Modes</div>
-              <div class="card-sub">One-Click Setup</div>
+              <div class="card-sub">One-click setup</div>
             </div>
           </div>
           <div class="preset-list" id="presetGrid"></div>
@@ -230,7 +230,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">Performance Profiles</div>
-            <div class="card-sub">VRAM / FPS / Qualität konfigurieren</div>
+            <div class="card-sub">Configure VRAM / FPS / Quality</div>
           </div>
         </div>
         <div class="profile-grid" id="profileGrid"></div>
@@ -243,7 +243,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">Full Screen Feed</div>
-            <div class="card-sub">Volle Auflösung</div>
+            <div class="card-sub">Full resolution</div>
           </div>
           <div class="feed-fps" id="feedFps2">—</div>
         </div>
@@ -259,22 +259,22 @@
         <div class="card-head">
           <div>
             <div class="card-title">Advanced Settings</div>
-            <div class="card-sub">Individuelle Kontrolle aller Parameter</div>
+            <div class="card-sub">Fine-grained control over every parameter</div>
           </div>
         </div>
 
         <div class="setting-row">
           <div><div class="setting-title">Confidence Threshold</div>
-               <div class="setting-desc">Minimum Wahrscheinlichkeit</div></div>
+               <div class="setting-desc">Minimum detection probability</div></div>
           <div class="setting-ctrl">
             <input type="range" id="confSlider" min="0.05" max="1.00" step="0.01" value="0.25">
-            <span class="setting-value" id="confValue">30%</span>
+            <span class="setting-value" id="confValue">25%</span>
           </div>
         </div>
 
         <div class="setting-row">
           <div><div class="setting-title">Box Thickness</div>
-               <div class="setting-desc">Rahmen-Dicke in Pixel</div></div>
+               <div class="setting-desc">Border width in pixels</div></div>
           <div class="setting-ctrl">
             <input type="range" id="thickSlider" min="1" max="8" step="1" value="3">
             <span class="setting-value" id="thickValue">3px</span>
@@ -283,7 +283,7 @@
 
         <div class="setting-row">
           <div><div class="setting-title">Max Detections</div>
-               <div class="setting-desc">Anzeige-Limit</div></div>
+               <div class="setting-desc">Display cap</div></div>
           <div class="setting-ctrl">
             <input type="range" id="maxDetSlider" min="1" max="20" step="1" value="10">
             <span class="setting-value" id="maxDetValue">10</span>
@@ -291,8 +291,8 @@
         </div>
 
         <div class="setting-row">
-          <div><div class="setting-title">Box Farbe</div>
-               <div class="setting-desc">Akzentfarbe</div></div>
+          <div><div class="setting-title">Box Color</div>
+               <div class="setting-desc">Accent color</div></div>
           <div class="setting-ctrl color-picker">
             <button class="color-dot" data-color="#ff8c00" style="background:#ff8c00"></button>
             <button class="color-dot" data-color="#ffa833" style="background:#ffa833"></button>
@@ -305,39 +305,39 @@
 
         <div class="setting-row">
           <div><div class="setting-title">Labels</div>
-               <div class="setting-desc">SURVIVOR Text auf Boxes</div></div>
+               <div class="setting-desc">"SURVIVOR" text on boxes</div></div>
           <label class="toggle"><input type="checkbox" id="toggleLabels" checked><span class="toggle-slider"></span></label>
         </div>
         <div class="setting-row">
-          <div><div class="setting-title">Confidence in Label</div>
-               <div class="setting-desc">% mit anzeigen</div></div>
+          <div><div class="setting-title">Confidence in label</div>
+               <div class="setting-desc">Show percentage</div></div>
           <label class="toggle"><input type="checkbox" id="toggleConf" checked><span class="toggle-slider"></span></label>
         </div>
         <div class="setting-row">
-          <div><div class="setting-title">Glow-Effekt</div>
-               <div class="setting-desc">Leuchten um Boxes</div></div>
+          <div><div class="setting-title">Glow Effect</div>
+               <div class="setting-desc">Glow around boxes</div></div>
           <label class="toggle"><input type="checkbox" id="toggleGlow" checked><span class="toggle-slider"></span></label>
         </div>
         <div class="setting-row">
           <div><div class="setting-title">Crosshair</div>
-               <div class="setting-desc">Fadenkreuz in Bildmitte</div></div>
+               <div class="setting-desc">Crosshair at screen center</div></div>
           <label class="toggle"><input type="checkbox" id="toggleCrosshair" checked><span class="toggle-slider"></span></label>
         </div>
         <div class="setting-row">
-          <div><div class="setting-title">HUD-Debug</div>
-               <div class="setting-desc">Filter-Zonen visualisieren</div></div>
+          <div><div class="setting-title">HUD Debug</div>
+               <div class="setting-desc">Visualize filter zones</div></div>
           <label class="toggle"><input type="checkbox" id="toggleHud"><span class="toggle-slider"></span></label>
         </div>
 
         <div class="setting-row">
-          <div><div class="setting-title">🔴 Aura-Filter</div>
-               <div class="setting-desc">Verwirft REINE rote Auren/Licht-Effekte. Survivor mit rotem Shirt bleiben sichtbar — erkennt Haut, Haare + Farbvarianz</div></div>
+          <div><div class="setting-title">🔴 Aura Filter</div>
+               <div class="setting-desc">Rejects pure red auras/glow effects. Survivors with red clothing stay visible — detects skin, hair + color variance</div></div>
           <label class="toggle"><input type="checkbox" id="toggleRed" checked><span class="toggle-slider"></span></label>
         </div>
 
         <div class="setting-row">
-          <div><div class="setting-title">Aura-Filter Stärke</div>
-               <div class="setting-desc">Minimum roter Pixel-Anteil für Aura-Erkennung (Haut/Haar/Varianz werden zusätzlich geprüft)</div></div>
+          <div><div class="setting-title">Aura Filter Strength</div>
+               <div class="setting-desc">Minimum red pixel ratio for aura detection (skin/hair/variance checked additionally)</div></div>
           <div class="setting-ctrl">
             <input type="range" id="redThreshSlider" min="0.20" max="0.90" step="0.05" value="0.35">
             <span class="setting-value" id="redThreshValue">35%</span>
@@ -352,14 +352,14 @@
         <div class="card-head">
           <div>
             <div class="card-title">System Information</div>
-            <div class="card-sub">Details & Metriken</div>
+            <div class="card-sub">Details & metrics</div>
           </div>
         </div>
         <table class="info-table">
           <tbody>
-            <tr><td>Modell</td><td id="infoModel">—</td></tr>
-            <tr><td>Architektur</td><td>YOLOv8-Large (43M Parameter)</td></tr>
-            <tr><td>Training</td><td>2210 Bilder, 194 Epochen</td></tr>
+            <tr><td>Model</td><td id="infoModel">—</td></tr>
+            <tr><td>Architecture</td><td>YOLOv8-Large (43M parameters)</td></tr>
+            <tr><td>Training</td><td>2210 images, 194 epochs</td></tr>
             <tr><td>mAP@50</td><td>96.8%</td></tr>
             <tr><td>Recall</td><td>95.7%</td></tr>
             <tr><td>Precision</td><td>95.8%</td></tr>
