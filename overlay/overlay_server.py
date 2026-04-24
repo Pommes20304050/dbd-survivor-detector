@@ -316,7 +316,7 @@ HUD_REGIONS = [
 
 class State:
     running          = False
-    conf_threshold   = 0.22
+    conf_threshold   = 0.25
     show_hud_regions = False
     show_crosshair   = True
     show_labels      = True
@@ -327,7 +327,7 @@ class State:
     frame_count      = 0
     session_start    = None
     fps_history      = deque(maxlen=60)
-    profile          = 'ultra'
+    profile          = 'ultra'   # Competitive Preset → Ultra Profile
     current_frame    = None
     # Erweiterte Optionen
     box_thickness    = 3
@@ -335,7 +335,7 @@ class State:
     show_conf        = True
     min_box_size     = 400       # Minimum Box-Area (px²)
     max_detections   = 10
-    active_preset    = 'standard'
+    active_preset    = 'competitive'
     monitor_index    = 1    # welcher Monitor gescannt wird
     monitors_info    = []   # Liste verfuegbarer Monitore
     current_boxes    = []
