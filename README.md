@@ -93,4 +93,7 @@ runs/                    # Training-Runs (gitignored)
 
 ## License
 
-MIT License © Pommes2030450
+**All Rights Reserved** — Copyright © 2026 Pommes20304050
+
+Proprietary and confidential. See [LICENSE](LICENSE) for details.
+No copying, distribution, or modification permitted.
