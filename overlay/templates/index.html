@@ -330,16 +330,16 @@
         </div>
 
         <div class="setting-row">
-          <div><div class="setting-title">🔴 Rot-Filter (Killer-Aura)</div>
-               <div class="setting-desc">Verwirft Detections die dominant rot sind (Killer-Stain, Blood-Effects)</div></div>
+          <div><div class="setting-title">🔴 Aura-Filter</div>
+               <div class="setting-desc">Verwirft REINE rote Auren/Licht-Effekte. Survivor mit rotem Shirt bleiben sichtbar — erkennt Haut, Haare + Farbvarianz</div></div>
           <label class="toggle"><input type="checkbox" id="toggleRed" checked><span class="toggle-slider"></span></label>
         </div>
 
         <div class="setting-row">
-          <div><div class="setting-title">Rot-Filter Stärke</div>
-               <div class="setting-desc">Minimum % roter Pixel um Box zu verwerfen</div></div>
+          <div><div class="setting-title">Aura-Filter Stärke</div>
+               <div class="setting-desc">Minimum roter Pixel-Anteil für Aura-Erkennung (Haut/Haar/Varianz werden zusätzlich geprüft)</div></div>
           <div class="setting-ctrl">
-            <input type="range" id="redThreshSlider" min="0.15" max="0.80" step="0.05" value="0.35">
+            <input type="range" id="redThreshSlider" min="0.20" max="0.90" step="0.05" value="0.35">
             <span class="setting-value" id="redThreshValue">35%</span>
           </div>
         </div>

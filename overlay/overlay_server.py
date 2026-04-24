@@ -490,8 +490,12 @@ class DetectionEngine(threading.Thread):
         return self.pt_model, profile['imgsz'], augment
 
     @staticmethod
-    def _is_mostly_red(frame_bgr, box, threshold: float = 0.35) -> bool:
-        """Prueft ob die Box dominant rot ist (Killer-Stain, Aura, Blood-Effect)."""
+    def _is_red_aura(frame_bgr, box, threshold: float = 0.35) -> bool:
+        """
+        Prueft ob Box eine AURA/LICHT ist (vs. echter Person mit rotem Shirt).
+        Unterscheidung: Aura = uniform rot + keine Hauttoene.
+                       Survivor in rot = mixed Farben + evtl. Haut/Haare.
+        """
         x1, y1, x2, y2 = box
         h, w = frame_bgr.shape[:2]
         x1 = max(0, int(x1)); y1 = max(0, int(y1))
@@ -510,14 +514,37 @@ class DetectionEngine(threading.Thread):
         hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
         h_ch, s_ch, v_ch = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
 
-        # Rot liegt bei H=0-10 oder H=170-180 (OpenCV HSV: H=0-179)
+        # Rot-Maske (inkl. leuchtend)
         red_hue = (h_ch <= 10) | (h_ch >= 170)
-        saturated = s_ch >= 100        # deutlich gesaettigt
-        bright = v_ch >= 60            # nicht zu dunkel
+        saturated = s_ch >= 100
+        bright = v_ch >= 60
         red_mask = red_hue & saturated & bright
-
         red_ratio = red_mask.sum() / red_mask.size
-        return red_ratio > threshold
+
+        # Unter Schwelle → sicher kein Aura-Treffer (Survivor mit bisschen Rot)
+        if red_ratio < threshold:
+            return False
+
+        # Hauttoene erkennen (typische Survivor-Haut: H=0-25, niedrige Saettigung)
+        skin_mask = ((h_ch <= 25) | (h_ch >= 165)) & (s_ch >= 30) & (s_ch <= 180) & (v_ch >= 80)
+        skin_ratio = skin_mask.sum() / skin_mask.size
+
+        # Haare (schwarz/braun): V niedrig, S niedrig
+        hair_mask = (v_ch < 80) & (s_ch < 80)
+        hair_ratio = hair_mask.sum() / hair_mask.size
+
+        # Wenn Haut ODER Haare erkennbar → echte Person, nicht Aura
+        if skin_ratio > 0.08 or hair_ratio > 0.15:
+            return False
+
+        # Farbvarianz — echte Person hat hohe Varianz (Kleidung+Haut+Haare+BG),
+        # Aura ist sehr uniform
+        pixel_std = float(region.reshape(-1, 3).std())
+        if pixel_std > 45:   # hohe Varianz → echte Szene
+            return False
+
+        # Hohe Rot-Ratio + wenig Haut/Haare + uniform → Aura
+        return True
 
     @staticmethod
     def _in_hud(box, w, h):
@@ -615,8 +642,8 @@ class DetectionEngine(threading.Thread):
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     if self._in_hud((x1, y1, x2, y2), self.monitor_w, self.monitor_h):
                         continue
-                    # Farbfilter: rot-dominante Boxes (Killer-Stain/Aura) verwerfen
-                    if red_on and self._is_mostly_red(frame, (x1, y1, x2, y2), red_th):
+                    # Rot-Aura Filter: unterscheidet Aura (verwerfen) vs. roter Survivor (behalten)
+                    if red_on and self._is_red_aura(frame, (x1, y1, x2, y2), red_th):
                         continue
                     boxes.append((x1, y1, x2, y2))
                     confs.append(float(box.conf[0]))
