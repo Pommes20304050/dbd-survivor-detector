@@ -241,7 +241,7 @@ class SurvivorApp(ctk.CTk):
         def run():
             import re
             proc = subprocess.Popen(
-                [sys.executable, "src/iterative_train.py",
+                [sys.executable, "-u", "src/iterative_train.py",
                  "--videos", folder,
                  f"--rounds={rounds}",
                  f"--epochs={epochs}"],
@@ -289,7 +289,7 @@ class SurvivorApp(ctk.CTk):
         if not path.exists():
             self._log("Noch keine Historie vorhanden.")
             return
-        content = path.read_text()
+        content = path.read_text(encoding='utf-8', errors='replace')
         self._log("Training Historie:")
         for line in content.splitlines():
             self._log(f"  {line}")
@@ -511,7 +511,7 @@ class SurvivorApp(ctk.CTk):
 
         def run():
             proc = subprocess.Popen(
-                [sys.executable, "src/train.py", f"--epochs={epochs}"],
+                [sys.executable, "-u", "src/train.py", f"--epochs={epochs}"],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 text=True, encoding='utf-8', errors='replace', bufsize=1
             )

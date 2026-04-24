@@ -21,19 +21,49 @@ DISPLAY_W        = 1280
 DISPLAY_H        = 720
 MONITOR_INDEX    = 1
 
+# HUD-Regionen identisch zu den anderen Scripts
+HUD_REGIONS = [
+    (0.00, 0.00, 0.18, 0.75),
+    (0.85, 0.00, 1.00, 0.20),
+    (0.30, 0.70, 0.70, 1.00),
+    (0.00, 0.80, 0.25, 1.00),
+    (0.82, 0.25, 1.00, 1.00),
+]
+
+
+def _in_hud(box, w, h):
+    x1, y1, x2, y2 = box
+    area = (x2 - x1) * (y2 - y1)
+    if area <= 0:
+        return False
+    for rx1, ry1, rx2, ry2 in HUD_REGIONS:
+        hx1, hy1 = rx1 * w, ry1 * h
+        hx2, hy2 = rx2 * w, ry2 * h
+        iw = max(0, min(x2, hx2) - max(x1, hx1))
+        ih = max(0, min(y2, hy2) - max(y1, hy1))
+        if iw * ih / area > 0.7:
+            return True
+    return False
+
 
 class SurvivorDetector:
     def __init__(self, use_finetuned: bool = True):
         self.is_finetuned = use_finetuned and FINETUNED_MODEL.exists()
 
-        if self.is_finetuned:
-            print(f"[YOLO] Fine-tuned Modell: {FINETUNED_MODEL}")
-            self.model = YOLO(str(FINETUNED_MODEL))
-            self.classes = None  # alle eigenen Klassen
-        else:
-            print(f"[YOLO] COCO Basis-Modell: {COCO_MODEL}")
+        try:
+            if self.is_finetuned:
+                print(f"[YOLO] Fine-tuned Modell: {FINETUNED_MODEL}")
+                self.model = YOLO(str(FINETUNED_MODEL))
+                self.classes = None
+            else:
+                print(f"[YOLO] COCO Basis-Modell: {COCO_MODEL}")
+                self.model = YOLO(COCO_MODEL)
+                self.classes = [PERSON_CLASS]
+        except Exception as e:
+            print(f"[YOLO] Fehler beim Laden: {e} — Fallback auf COCO")
             self.model = YOLO(COCO_MODEL)
             self.classes = [PERSON_CLASS]
+            self.is_finetuned = False
 
     def detect(self, frame_bgr: np.ndarray) -> list[dict]:
         results = self.model(
@@ -41,13 +71,17 @@ class SurvivorDetector:
             classes=self.classes,
             conf=CONF_THRESHOLD,
             imgsz=INFER_IMGSZ,
-            augment=True,              # Test-Time Augmentation — robuster
+            augment=True,
             verbose=False
         )[0]
 
+        h, w = frame_bgr.shape[:2]
         detections = []
         for box in results.boxes:
             x1, y1, x2, y2 = map(int, box.xyxy[0])
+            # HUD-Filter
+            if _in_hud((x1, y1, x2, y2), w, h):
+                continue
             detections.append({
                 'box':    [x1, y1, x2, y2],
                 'conf':   float(box.conf[0]),
@@ -107,7 +141,8 @@ def live_loop():
     t_last = time.perf_counter()
 
     with mss.mss() as sct:
-        monitor = sct.monitors[MONITOR_INDEX]
+        mon_idx = MONITOR_INDEX if len(sct.monitors) > MONITOR_INDEX else 0
+        monitor = sct.monitors[mon_idx]
 
         while True:
             t0 = time.perf_counter()

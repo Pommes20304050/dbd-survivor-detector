@@ -22,7 +22,7 @@
 
   --text:        #ffffff;
   --text-dim:    #8a8f9a;
-  --text-muted:  #5c616c;
+  --text-muted:  #7a7f8a;
 
   --border:      rgba(255, 255, 255, 0.06);
   --border-2:    rgba(255, 255, 255, 0.1);
@@ -586,7 +586,12 @@ canvas#mainChart {
   letter-spacing: -0.5px;
   margin-bottom: 10px;
   font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.brand-text { display: flex; flex-direction: column; }
 
 .mini-value.orange { color: var(--orange); }
 
@@ -634,7 +639,8 @@ canvas#mainChart {
 
 .feed-wrap.feed-big {
   aspect-ratio: auto;
-  min-height: 500px;
+  min-height: 400px;
+  max-height: calc(100vh - 180px);
 }
 
 .feed-wrap img {
@@ -972,4 +978,10 @@ input[type="range"]::-webkit-slider-thumb {
   }
   .sidebar-section, .sidebar-nav, .sidebar-footer { padding: 0; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .stats-row { grid-template-columns: 1fr; }
+  .main { padding: 16px; }
+  .page-title h1 { font-size: 22px; }
 }

@@ -182,9 +182,6 @@ def main():
 
         if key == 27:    # ESC
             break
-        elif key in (2555904, ord('d')) and not grid_mode and key != ord('d'):
-            # Arrow right (Windows)
-            idx = (idx + 1) % len(images)
         elif key == 2555904:  # Arrow right
             if grid_mode:
                 idx = min(len(images) - 1, idx + 24)
@@ -204,7 +201,8 @@ def main():
                 img_path.unlink(missing_ok=True)
                 lbl_path.unlink(missing_ok=True)
                 print(f"Geloescht: {img_path.name}")
-                images = sorted(IMG_DIR.glob('*.jpg'))
+                # Aus Liste entfernen, Filter/Sort behalten
+                images.pop(idx)
                 if not images:
                     break
                 idx = idx % len(images)

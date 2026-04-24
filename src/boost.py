@@ -16,11 +16,12 @@ BOOST_PREFIX = 'boosted_'
 
 
 def clear_old_boosts():
-    """Alte Boost-Dateien entfernen, damit nicht multipliziert wird."""
+    """Alte Boost-Dateien entfernen — alle Extensions."""
     removed = 0
-    for img in IMG_DIR.glob(f'{BOOST_PREFIX}*.jpg'):
-        img.unlink()
-        removed += 1
+    for pattern in (f'{BOOST_PREFIX}*.jpg', f'{BOOST_PREFIX}*.png', f'{BOOST_PREFIX}*.jpeg'):
+        for img in IMG_DIR.glob(pattern):
+            img.unlink()
+            removed += 1
     for lbl in LBL_DIR.glob(f'{BOOST_PREFIX}*.txt'):
         lbl.unlink()
     if removed:
@@ -31,7 +32,7 @@ def boost_rare_samples(factor: int = 3):
     clear_old_boosts()
 
     # Finde alle schweren Fälle (Force-Captures = forced_*)
-    rare_images = sorted(IMG_DIR.glob('forced_*.jpg'))
+    rare_images = sorted(list(IMG_DIR.glob('forced_*.jpg')) + list(IMG_DIR.glob('forced_*.png')))
     if not rare_images:
         print("[Boost] Keine forced_* Bilder gefunden!")
         return

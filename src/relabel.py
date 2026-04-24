@@ -19,9 +19,9 @@ IMGSZ     = 1280
 HUD_REGIONS = [
     (0.00, 0.00, 0.18, 0.75),
     (0.85, 0.00, 1.00, 0.20),
-    (0.25, 0.55, 0.90, 1.00),
+    (0.30, 0.70, 0.70, 1.00),
     (0.00, 0.80, 0.25, 1.00),
-    (0.75, 0.80, 1.00, 1.00),
+    (0.82, 0.25, 1.00, 1.00),
 ]
 
 
@@ -41,7 +41,7 @@ def in_hud(box, img_w, img_h):
 
 
 def main():
-    images = sorted(IMG_DIR.glob('*.jpg'))
+    images = sorted(list(IMG_DIR.glob('*.jpg')) + list(IMG_DIR.glob('*.png')))
     print(f"Relabeln: {len(images)} Bilder")
 
     if FINETUNED.exists():
@@ -89,9 +89,11 @@ def main():
                 f.write('\n'.join(lines) + '\n')
             relabeled += 1
         else:
-            # Keine validen Detections → beiseite schaffen
+            # Keine validen Detections → beiseite schaffen, LABEL BEHALTEN als Backup!
             shutil.move(str(img_path), str(EMPTY_DIR / img_path.name))
             if lbl_path.exists():
+                # Label als Backup ins empty-Verzeichnis kopieren, dann aus labels/ entfernen
+                shutil.copy(str(lbl_path), str(EMPTY_DIR / lbl_path.name))
                 lbl_path.unlink()
             moved += 1
 
