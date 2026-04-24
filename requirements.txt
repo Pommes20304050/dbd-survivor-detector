@@ -1,5 +1,39 @@
+# Core ML
+torch>=2.0.0
+torchvision>=0.15.0
 ultralytics>=8.0.0
+
+# Computer Vision
 opencv-python>=4.8.0
-mss>=9.0.0
 numpy>=1.24.0
-customtkinter>=5.2.0
+pandas>=2.0.0
+
+# Screen Capture
+mss>=9.0.0
+dxcam>=0.3.0
+
+# Input / Hotkeys
+pynput>=1.7.6
+
+# Overlay (Qt)
+PyQt5>=5.15.0
+
+# Web Dashboard
+flask>=2.0.0
+flask-cors>=6.0.0
+
+# Monitoring
+pynvml>=13.0.0
+psutil>=5.9.0
+
+# Progress / Utils
+tqdm>=4.60.0
+
+# Optional — für TensorRT Beschleunigung (2-3x FPS)
+# pip install --extra-index-url https://pypi.nvidia.com tensorrt-cu12
+# onnx>=1.21.0
+# onnxslim
+# onnxruntime-gpu
+
+# Optional — für Training-GUI (src/ui.py)
+# customtkinter>=5.2.0
