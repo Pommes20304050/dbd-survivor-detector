@@ -38,6 +38,32 @@ try:
 except ImportError:
     DXCAM_AVAILABLE = False
 
+import psutil
+
+# CPU Infos einmal holen
+try:
+    _CPU_NAME = 'CPU'
+    import subprocess
+    res = subprocess.run(['wmic', 'cpu', 'get', 'Name'], capture_output=True, text=True, timeout=3)
+    lines = [l.strip() for l in res.stdout.splitlines() if l.strip() and 'Name' not in l]
+    if lines:
+        _CPU_NAME = lines[0]
+except Exception:
+    _CPU_NAME = f'CPU ({psutil.cpu_count()}C)'
+
+
+def get_cpu_stats():
+    try:
+        return {
+            'util': psutil.cpu_percent(interval=None),
+            'cores': psutil.cpu_count(),
+            'freq': int(psutil.cpu_freq().current) if psutil.cpu_freq() else 0,
+            'name': _CPU_NAME,
+        }
+    except Exception:
+        return {'util': 0, 'cores': 0, 'freq': 0, 'name': _CPU_NAME}
+
+
 # GPU Monitoring (optional, faellt zurueck wenn nicht verfuegbar)
 try:
     import pynvml
@@ -654,8 +680,9 @@ def index():
 
 @app.route('/api/status')
 def api_status():
-    # GPU-Call ausserhalb des Locks (kann ~ms dauern)
+    # GPU/CPU Calls ausserhalb des Locks
     gpu_stats = get_gpu_stats()
+    cpu_stats = get_cpu_stats()
     with state.lock:
         uptime = 0
         if state.session_start:
@@ -687,6 +714,7 @@ def api_status():
             'active_preset':    state.active_preset,
             'presets':          SIMPLE_PRESETS,
             'gpu':              gpu_stats,
+            'cpu':              cpu_stats,
             'monitor_index':    state.monitor_index,
             'monitors':         state.monitors_info,
         })
