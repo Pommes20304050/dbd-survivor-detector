@@ -1,0 +1,31 @@
+# Daten (zu groß für Git, ~3 GB)
+data/
+runs/
+*.pt
+*.engine
+*.onnx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+*.output
+
+# Ultralytics
+yolov8*.pt
+yolo*.pt
