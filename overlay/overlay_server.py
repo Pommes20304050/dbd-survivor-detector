@@ -169,9 +169,9 @@ SIMPLE_PRESETS = {
     'maximum': {
         'name':    'MAXIMUM',
         'emoji':   '⚡',
-        'desc':    'Volle GPU-Power, 1920px, TTA, beste Erkennung',
+        'desc':    'Volle GPU-Power, 1920px + TTA, findet ALLES',
         'profile':         'max',
-        'conf':            0.35,
+        'conf':            0.15,
         'show_labels':     True,
         'show_crosshair':  True,
         'show_hud_regions': False,
@@ -182,9 +182,9 @@ SIMPLE_PRESETS = {
     'standard': {
         'name':    'Standard',
         'emoji':   '◉',
-        'desc':    'Empfohlen für alle — ausbalanciert',
+        'desc':    'Empfohlen für alle — ausbalanciert, lockere Erkennung',
         'profile':         'high',
-        'conf':            0.35,
+        'conf':            0.22,
         'show_labels':     True,
         'show_crosshair':  True,
         'show_hud_regions': False,
@@ -195,9 +195,9 @@ SIMPLE_PRESETS = {
     'competitive': {
         'name':    'Competitive',
         'emoji':   '◆',
-        'desc':    'Maximale Genauigkeit für serious Gameplay',
+        'desc':    'Ultra + TTA, AI denkt mehrfach nach',
         'profile':         'ultra',
-        'conf':            0.40,
+        'conf':            0.25,
         'show_labels':     True,
         'show_crosshair':  True,
         'show_hud_regions': False,
@@ -250,18 +250,18 @@ PERFORMANCE_PROFILES = {
         'name':        'Ultra',
         'imgsz':       1280,
         'use_engine':  True,    # TensorRT Engine
-        'augment':     False,
+        'augment':     True,    # TTA aktiviert — AI denkt mehr nach
         'vram_mb':     1500,
-        'vram_pct':    75,
-        'fps':         84,
-        'quality_pct': 100,
-        'desc':        'Maximale Qualität, TensorRT Engine, beste Distanz-Erkennung',
+        'vram_pct':    78,
+        'fps':         60,
+        'quality_pct': 102,
+        'desc':        'TensorRT + TTA — AI prüft Bild mehrfach, findet mehr Survivors',
     },
     'high': {
         'name':        'High',
         'imgsz':       960,
         'use_engine':  False,
-        'augment':     False,
+        'augment':     True,    # TTA an — findet mehr Survivors
         'vram_mb':     1000,
         'vram_pct':    55,
         'fps':         130,
@@ -316,7 +316,7 @@ HUD_REGIONS = [
 
 class State:
     running          = False
-    conf_threshold   = 0.30
+    conf_threshold   = 0.22
     show_hud_regions = False
     show_crosshair   = True
     show_labels      = True
