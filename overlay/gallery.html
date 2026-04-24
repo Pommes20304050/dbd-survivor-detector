@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Template Gallery — DBD Survivor Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@300;500;700&family=Inter:wght@300;400;600;800;900&family=Cormorant+Garamond:wght@300;400;700&family=Press+Start+2P&family=VT323&family=Playfair+Display:wght@400;700;900&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111; color: #eee; font-family: sans-serif; }
+
+.picker-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 1000; padding: 14px 24px;
+  background: rgba(0,0,0,0.9); backdrop-filter: blur(20px);
+  border-bottom: 1px solid #333;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.picker-title { font-family: 'Inter'; font-weight: 800; font-size: 18px; letter-spacing: 2px; }
+.picker-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+.picker-link {
+  padding: 6px 12px; font-size: 11px; font-weight: 600;
+  background: #222; color: #aaa; border-radius: 16px;
+  text-decoration: none; transition: all 0.2s;
+}
+.picker-link:hover { background: #ff8c00; color: #000; }
+
+.template {
+  min-height: 100vh; padding: 100px 40px 60px;
+  position: relative; display: flex; flex-direction: column; gap: 24px;
+}
+.template-marker {
+  position: absolute; top: 80px; right: 40px;
+  padding: 8px 18px; background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px); border-radius: 20px;
+  font-family: 'JetBrains Mono'; font-size: 12px; letter-spacing: 2px;
+}
+.choose-btn {
+  position: absolute; top: 80px; left: 40px;
+  padding: 12px 24px; background: #ff8c00; color: #000;
+  font-weight: 800; font-size: 13px; letter-spacing: 2px;
+  border: none; border-radius: 10px; cursor: pointer;
+  text-transform: uppercase;
+}
+.choose-btn:hover { background: #ffa833; }
+
+/* ══════════════════════════════════════════════════════════
+   #1 TACTICAL ORANGE (aktuelles Design)
+   ══════════════════════════════════════════════════════════ */
+.tmpl-1 {
+  background: #000;
+  color: #fff5e8;
+  font-family: 'Rajdhani', sans-serif;
+}
+.tmpl-1 .hero {
+  padding: 32px; border: 1px solid rgba(255,140,0,0.3);
+  border-radius: 16px; background: rgba(25,15,8,0.5);
+  backdrop-filter: blur(20px); position: relative;
+}
+.tmpl-1 h1 {
+  font-family: 'Orbitron'; font-size: 32px; color: #ff8c00;
+  letter-spacing: 4px; text-shadow: 0 0 20px #ff8c00;
+}
+.tmpl-1 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.tmpl-1 .stat {
+  padding: 20px; background: rgba(25,15,8,0.8); border: 1px solid rgba(255,140,0,0.2);
+  border-radius: 12px; border-top: 3px solid #ff8c00;
+}
+.tmpl-1 .stat-v { font-family: 'Orbitron'; font-size: 36px; font-weight: 900; color: #ff8c00; }
+.tmpl-1 .stat-l { font-size: 11px; letter-spacing: 2px; color: #8a6850; }
+.tmpl-1 .btn {
+  padding: 14px 28px; background: linear-gradient(135deg, #ff8c00, #ff6600);
+  color: #000; border: none; border-radius: 10px;
+  font-family: 'JetBrains Mono'; font-weight: 800; letter-spacing: 2px;
+  box-shadow: 0 0 30px rgba(255,140,0,0.4);
+}
+
+/* ══════════════════════════════════════════════════════════
+   #2 MATRIX GREEN
+   ══════════════════════════════════════════════════════════ */
+.tmpl-2 {
+  background: #000;
+  color: #00ff41;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+}
+.tmpl-2::before {
+  content: '01001100 01001001 01010110 01000101 ...'; position: absolute;
+  top: 100px; left: 0; right: 0; bottom: 0; opacity: 0.08;
+  word-wrap: break-word; overflow: hidden; pointer-events: none;
+  line-height: 1.2; padding: 40px;
+}
+.tmpl-2 h1 {
+  font-size: 42px; text-shadow: 0 0 10px #00ff41;
+  border: 2px solid #00ff41; padding: 20px; display: inline-block;
+}
+.tmpl-2 h1::before { content: '> '; }
+.tmpl-2 h1::after { content: '_'; animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.tmpl-2 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.tmpl-2 .stat { border: 1px solid #00ff41; padding: 16px; background: rgba(0,255,65,0.05); }
+.tmpl-2 .stat-v { font-size: 36px; }
+.tmpl-2 .stat-l { font-size: 14px; opacity: 0.7; }
+.tmpl-2 .btn {
+  padding: 12px 24px; background: #000; color: #00ff41;
+  border: 2px solid #00ff41; font-family: 'VT323'; font-size: 20px;
+  cursor: pointer;
+}
+.tmpl-2 .btn:hover { background: #00ff41; color: #000; }
+
+/* ══════════════════════════════════════════════════════════
+   #3 BLOOD RITUAL (DBD themed)
+   ══════════════════════════════════════════════════════════ */
+.tmpl-3 {
+  background: radial-gradient(ellipse at top, #1a0505, #000);
+  color: #d4a574;
+  font-family: 'Cormorant Garamond', serif;
+}
+.tmpl-3 h1 {
+  font-family: 'Playfair Display'; font-size: 44px; font-weight: 900;
+  color: #8b0000; text-shadow: 0 0 30px rgba(139,0,0,0.8);
+  border-bottom: 1px solid #8b0000; padding-bottom: 12px;
+}
+.tmpl-3 h1::before, .tmpl-3 h1::after { content: ' ✠ '; color: #8b0000; }
+.tmpl-3 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.tmpl-3 .stat {
+  padding: 24px; background: linear-gradient(180deg, rgba(26,5,5,0.8), rgba(0,0,0,0.9));
+  border: 2px solid #3a1010; border-radius: 4px; position: relative;
+}
+.tmpl-3 .stat::before {
+  content: '❖'; position: absolute; top: 8px; right: 12px; color: #8b0000;
+}
+.tmpl-3 .stat-v { font-family: 'Playfair Display'; font-size: 38px; font-weight: 900; color: #8b0000; }
+.tmpl-3 .stat-l { font-family: 'Cormorant Garamond'; font-style: italic; color: #8a6850; }
+.tmpl-3 .btn {
+  padding: 14px 32px; background: linear-gradient(135deg, #8b0000, #4a0000);
+  color: #d4a574; border: 1px solid #8b0000; border-radius: 0;
+  font-family: 'Cormorant Garamond'; font-weight: 700; font-size: 15px;
+  text-transform: uppercase; letter-spacing: 3px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   #4 APPLE GLASS (minimal, weich)
+   ══════════════════════════════════════════════════════════ */
+.tmpl-4 {
+  background: linear-gradient(135deg, #0a0a15, #1a1a2e, #16213e);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+}
+.tmpl-4 h1 {
+  font-size: 34px; font-weight: 300; letter-spacing: -0.5px; color: #fff;
+}
+.tmpl-4 h1 span { font-weight: 800; background: linear-gradient(90deg, #5fc3ff, #a855f7); -webkit-background-clip: text; color: transparent; }
+.tmpl-4 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.tmpl-4 .stat {
+  padding: 28px; background: rgba(255,255,255,0.04); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 24px;
+}
+.tmpl-4 .stat-v { font-size: 42px; font-weight: 700; letter-spacing: -1px; color: #fff; }
+.tmpl-4 .stat-l { font-size: 13px; color: #7a8599; font-weight: 500; margin-top: 8px; }
+.tmpl-4 .btn {
+  padding: 14px 28px; background: rgba(255,255,255,0.1); backdrop-filter: blur(20px);
+  color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 14px;
+  font-weight: 600; font-size: 14px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   #5 VAPORWAVE 80s
+   ══════════════════════════════════════════════════════════ */
+.tmpl-5 {
+  background: linear-gradient(180deg, #ff6ec7 0%, #ff71ce 15%, #b967ff 50%, #01cdfe 85%, #05ffa1 100%);
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  position: relative;
+}
+.tmpl-5::before {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 4px);
+  pointer-events: none;
+}
+.tmpl-5 h1 {
+  font-family: 'Press Start 2P'; font-size: 32px; color: #fff;
+  text-shadow: 4px 4px 0 #ff00ff, 8px 8px 0 #00ffff;
+}
+.tmpl-5 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.tmpl-5 .stat {
+  padding: 24px; background: rgba(0,0,0,0.4); border: 2px solid #ff00ff;
+  box-shadow: 4px 4px 0 #00ffff, 8px 8px 0 #ff6ec7;
+  border-radius: 0;
+}
+.tmpl-5 .stat-v { font-family: 'Press Start 2P'; font-size: 24px; color: #00ffff; }
+.tmpl-5 .stat-l { font-family: 'VT323'; font-size: 20px; color: #ff6ec7; letter-spacing: 2px; }
+.tmpl-5 .btn {
+  padding: 14px 30px; background: #ff00ff; color: #fff;
+  border: none; font-family: 'Press Start 2P'; font-size: 12px;
+  cursor: pointer; box-shadow: 6px 6px 0 #00ffff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   #6 INDUSTRIAL STEEL
+   ══════════════════════════════════════════════════════════ */
+.tmpl-6 {
+  background:
+    repeating-linear-gradient(45deg, #1a1a1a 0px, #1a1a1a 10px, #222 10px, #222 20px),
+    #1a1a1a;
+  color: #e8e8e8;
+  font-family: 'Rajdhani', sans-serif;
+}
+.tmpl-6 h1 {
+  font-family: 'Orbitron'; font-size: 36px; font-weight: 900;
+  color: #ffcc00; text-transform: uppercase; letter-spacing: 6px;
+  text-shadow: 2px 2px 0 #000;
+  padding: 16px 24px;
+  background: linear-gradient(180deg, #2a2a2a, #0a0a0a);
+  border: 2px solid #444; border-left: 8px solid #ffcc00;
+}
+.tmpl-6 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tmpl-6 .stat {
+  padding: 20px; background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #444; border-radius: 0;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+.tmpl-6 .stat::before {
+  content: '●●●'; color: #ffcc00; font-size: 8px; letter-spacing: 4px; display: block; margin-bottom: 4px;
+}
+.tmpl-6 .stat-v { font-family: 'Orbitron'; font-size: 40px; font-weight: 900; color: #ffcc00; }
+.tmpl-6 .stat-l { font-size: 11px; text-transform: uppercase; letter-spacing: 3px; color: #888; }
+.tmpl-6 .btn {
+  padding: 14px 28px; background: #ffcc00; color: #000;
+  border: 3px solid #000; border-radius: 0; font-weight: 900;
+  font-family: 'Orbitron'; letter-spacing: 3px; text-transform: uppercase;
+  box-shadow: 4px 4px 0 #000;
+}
+
+/* ══════════════════════════════════════════════════════════
+   #7 NEO BRUTALIST
+   ══════════════════════════════════════════════════════════ */
+.tmpl-7 {
+  background: #f5ff00;
+  color: #000;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.tmpl-7 h1 {
+  font-size: 56px; font-weight: 900; text-transform: uppercase;
+  line-height: 0.9; letter-spacing: -2px;
+}
+.tmpl-7 h1 span { background: #000; color: #f5ff00; padding: 0 12px; }
+.tmpl-7 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.tmpl-7 .stat {
+  padding: 24px; background: #fff; border: 4px solid #000;
+  box-shadow: 8px 8px 0 #000;
+}
+.tmpl-7 .stat:nth-child(2) { background: #ff00aa; color: #fff; }
+.tmpl-7 .stat:nth-child(3) { background: #00ccff; }
+.tmpl-7 .stat:nth-child(4) { background: #000; color: #f5ff00; }
+.tmpl-7 .stat-v { font-size: 48px; font-weight: 900; line-height: 1; }
+.tmpl-7 .stat-l { font-size: 14px; font-weight: 700; text-transform: uppercase; margin-top: 8px; }
+.tmpl-7 .btn {
+  padding: 16px 32px; background: #ff00aa; color: #fff;
+  border: 4px solid #000; font-weight: 900; font-size: 15px;
+  text-transform: uppercase; box-shadow: 6px 6px 0 #000;
+  cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════════════
+   #8 DARK LUXURY (Gold on Black)
+   ══════════════════════════════════════════════════════════ */
+.tmpl-8 {
+  background: #0a0a0a;
+  color: #e8d5a9;
+  font-family: 'Playfair Display', serif;
+}
+.tmpl-8 h1 {
+  font-size: 48px; font-weight: 900; color: #d4af37;
+  letter-spacing: 2px; text-align: center;
+  background: linear-gradient(180deg, #ffd700, #b8860b);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.tmpl-8 h1::before, .tmpl-8 h1::after { content: ' ◆ '; color: #d4af37; -webkit-text-fill-color: #d4af37; }
+.tmpl-8 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.tmpl-8 .stat {
+  padding: 28px; background: linear-gradient(180deg, #1a1a1a, #0a0a0a);
+  border: 1px solid #3a2e0f; border-top: 2px solid #d4af37; border-radius: 4px;
+  text-align: center;
+}
+.tmpl-8 .stat-v {
+  font-size: 48px; font-weight: 900;
+  background: linear-gradient(180deg, #ffd700, #b8860b);
+  -webkit-background-clip: text; color: transparent;
+}
+.tmpl-8 .stat-l { font-style: italic; color: #8a7050; letter-spacing: 2px; font-size: 12px; }
+.tmpl-8 .btn {
+  padding: 14px 36px; background: linear-gradient(135deg, #d4af37, #b8860b);
+  color: #0a0a0a; border: none; border-radius: 2px; font-family: 'Playfair Display';
+  font-weight: 900; font-size: 14px; letter-spacing: 4px; text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════════════════════
+   #9 PAPER MINIMAL (Notion-Style)
+   ══════════════════════════════════════════════════════════ */
+.tmpl-9 {
+  background: #fafafa;
+  color: #1a1a1a;
+  font-family: 'Inter', sans-serif;
+}
+.tmpl-9 h1 {
+  font-size: 40px; font-weight: 800; color: #1a1a1a;
+  letter-spacing: -1.5px;
+}
+.tmpl-9 h1 span { color: #ff6b35; }
+.tmpl-9 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.tmpl-9 .stat {
+  padding: 20px 24px; background: #fff; border: 1px solid #e5e5e5;
+  border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.tmpl-9 .stat-v { font-size: 32px; font-weight: 700; color: #1a1a1a; letter-spacing: -1px; }
+.tmpl-9 .stat-l { font-size: 13px; color: #666; margin-top: 4px; }
+.tmpl-9 .btn {
+  padding: 10px 20px; background: #1a1a1a; color: #fff;
+  border: none; border-radius: 8px; font-weight: 500; font-size: 14px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   #10 HOLO PRISM (Apple Vision Pro Style)
+   ══════════════════════════════════════════════════════════ */
+.tmpl-10 {
+  background: linear-gradient(135deg, #1a0033, #000033, #003366);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  position: relative; overflow: hidden;
+}
+.tmpl-10::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 100, 200, 0.3), transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(100, 200, 255, 0.3), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(200, 255, 100, 0.2), transparent 40%);
+  pointer-events: none;
+}
+.tmpl-10 h1 {
+  font-size: 40px; font-weight: 300; letter-spacing: -0.5px;
+  background: linear-gradient(90deg, #ff64c8, #64c8ff, #c8ff64, #ff64c8);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; color: transparent;
+  animation: holo 8s linear infinite;
+}
+@keyframes holo { to { background-position-x: 300%; } }
+.tmpl-10 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; position: relative; z-index: 1; }
+.tmpl-10 .stat {
+  padding: 28px; background: rgba(255,255,255,0.04); backdrop-filter: blur(40px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 22px;
+  box-shadow: 0 10px 50px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2);
+}
+.tmpl-10 .stat-v {
+  font-size: 40px; font-weight: 700; letter-spacing: -1px;
+  background: linear-gradient(180deg, #fff, #aaccff);
+  -webkit-background-clip: text; color: transparent;
+}
+.tmpl-10 .stat-l { font-size: 13px; color: #aabbdd; font-weight: 500; }
+.tmpl-10 .btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, rgba(255,100,200,0.3), rgba(100,200,255,0.3));
+  backdrop-filter: blur(20px); color: #fff;
+  border: 1px solid rgba(255,255,255,0.2); border-radius: 16px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="picker-bar">
+  <div class="picker-title">◢ DBD DETECTOR · TEMPLATE GALLERY ◣</div>
+  <div class="picker-nav">
+    <a class="picker-link" href="#t1">1 · TACTICAL</a>
+    <a class="picker-link" href="#t2">2 · MATRIX</a>
+    <a class="picker-link" href="#t3">3 · BLOOD</a>
+    <a class="picker-link" href="#t4">4 · GLASS</a>
+    <a class="picker-link" href="#t5">5 · VAPORWAVE</a>
+    <a class="picker-link" href="#t6">6 · STEEL</a>
+    <a class="picker-link" href="#t7">7 · BRUTALIST</a>
+    <a class="picker-link" href="#t8">8 · LUXURY</a>
+    <a class="picker-link" href="#t9">9 · PAPER</a>
+    <a class="picker-link" href="#t10">10 · HOLO</a>
+  </div>
+</div>
+
+<!-- 1 TACTICAL ORANGE -->
+<section class="template tmpl-1" id="t1">
+  <button class="choose-btn" onclick="choose(1)">✓ Diesen wählen</button>
+  <div class="template-marker">TEMPLATE #1 · TACTICAL ORANGE</div>
+  <div class="hero">
+    <h1>DBD SURVIVOR DETECTOR</h1>
+    <p style="margin-top: 8px; color: #8a6850; font-family: 'JetBrains Mono';">NEURAL NETWORK · ACTIVE · 84 FPS</p>
+    <button class="btn" style="margin-top: 20px;">▶ START DETECTION</button>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84.2</div><div class="stat-l">FPS LIVE</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">SURVIVORS</div></div>
+    <div class="stat"><div class="stat-v">1,247</div><div class="stat-l">TOTAL</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">SESSION</div></div>
+  </div>
+</section>
+
+<!-- 2 MATRIX -->
+<section class="template tmpl-2" id="t2">
+  <button class="choose-btn" onclick="choose(2)">✓ Diesen wählen</button>
+  <div class="template-marker" style="color:#00ff41; border:1px solid #00ff41; background:#000;">TEMPLATE #2 · MATRIX GREEN</div>
+  <h1>DBD_DETECTOR.exe</h1>
+  <div style="font-size: 22px; line-height: 1.5;">
+    [CONNECTED] Neural network online.<br>
+    [PID] 14532 · [MEM] 9.2GB · [GPU] RTX 4070 SUPER<br>
+    &gt; awaiting input_
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84.2</div><div class="stat-l">FPS</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">TARGETS</div></div>
+    <div class="stat"><div class="stat-v">1247</div><div class="stat-l">TOTAL</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">UPTIME</div></div>
+  </div>
+  <button class="btn">&gt; EXECUTE --start</button>
+</section>
+
+<!-- 3 BLOOD RITUAL -->
+<section class="template tmpl-3" id="t3">
+  <button class="choose-btn" onclick="choose(3)">✓ Diesen wählen</button>
+  <div class="template-marker" style="color:#d4a574; border:1px solid #8b0000;">TEMPLATE #3 · BLOOD RITUAL</div>
+  <h1>The Entity Watches</h1>
+  <p style="font-size: 20px; font-style: italic; color: #8a6850;">Survivor detection through the veil · <em>Memento Mori</em></p>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84</div><div class="stat-l">Pulsatio per minutum</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">Animae praesentes</div></div>
+    <div class="stat"><div class="stat-v">1247</div><div class="stat-l">Totalis conspectae</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">Tempore sacri</div></div>
+  </div>
+  <button class="btn">◆ Invoke Ritual ◆</button>
+</section>
+
+<!-- 4 APPLE GLASS -->
+<section class="template tmpl-4" id="t4">
+  <button class="choose-btn" onclick="choose(4)">✓ Diesen wählen</button>
+  <div class="template-marker" style="background: rgba(255,255,255,0.1); color:#fff;">TEMPLATE #4 · APPLE GLASS</div>
+  <h1>DBD <span>Survivor Detector</span></h1>
+  <p style="color: #8893a8; font-size: 17px; margin-top: 4px;">Real-time neural network detection for intelligent gameplay</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84.2</div><div class="stat-l">Frames per second</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">Currently visible</div></div>
+    <div class="stat"><div class="stat-v">1,247</div><div class="stat-l">Total detections</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">Session time</div></div>
+  </div>
+  <button class="btn">Start Detection</button>
+</section>
+
+<!-- 5 VAPORWAVE -->
+<section class="template tmpl-5" id="t5">
+  <button class="choose-btn" onclick="choose(5)">✓ Diesen wählen</button>
+  <div class="template-marker" style="background:#ff00ff; color:#fff;">TEMPLATE #5 · VAPORWAVE 80s</div>
+  <h1>DETECTOR v3</h1>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84</div><div class="stat-l">FPS</div></div>
+    <div class="stat"><div class="stat-v">03</div><div class="stat-l">SEEN</div></div>
+    <div class="stat"><div class="stat-v">1247</div><div class="stat-l">TOTAL</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">TIME</div></div>
+  </div>
+  <button class="btn">PRESS START ▷</button>
+</section>
+
+<!-- 6 INDUSTRIAL STEEL -->
+<section class="template tmpl-6" id="t6">
+  <button class="choose-btn" onclick="choose(6)">✓ Diesen wählen</button>
+  <div class="template-marker" style="background:#ffcc00; color:#000; font-weight: 800;">TEMPLATE #6 · INDUSTRIAL STEEL</div>
+  <h1>◆ SURVIVOR DETECTOR</h1>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84.2</div><div class="stat-l">FRAMES/SEC</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">DETECTED</div></div>
+    <div class="stat"><div class="stat-v">1247</div><div class="stat-l">CUMULATIVE</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">RUN-TIME</div></div>
+  </div>
+  <button class="btn">⚠ INITIATE</button>
+</section>
+
+<!-- 7 NEO BRUTALIST -->
+<section class="template tmpl-7" id="t7">
+  <button class="choose-btn" onclick="choose(7)">✓ Diesen wählen</button>
+  <div class="template-marker" style="background:#000; color:#f5ff00;">TEMPLATE #7 · NEO BRUTALIST</div>
+  <h1>Detect <span>Survivors.</span><br>Win games.</h1>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84.2</div><div class="stat-l">FPS</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">SEEN NOW</div></div>
+    <div class="stat"><div class="stat-v">1247</div><div class="stat-l">TOTAL</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">SESSION</div></div>
+  </div>
+  <button class="btn">▶ LET'S GO!</button>
+</section>
+
+<!-- 8 DARK LUXURY -->
+<section class="template tmpl-8" id="t8">
+  <button class="choose-btn" onclick="choose(8)">✓ Diesen wählen</button>
+  <div class="template-marker" style="background:#d4af37; color:#000;">TEMPLATE #8 · DARK LUXURY</div>
+  <h1>DBD Survivor Detector</h1>
+  <p style="text-align: center; font-style: italic; color: #8a7050; font-size: 18px;">The premier solution for gameplay intelligence</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84.2</div><div class="stat-l">PER SECOND</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">VISIBLE</div></div>
+    <div class="stat"><div class="stat-v">1,247</div><div class="stat-l">DETECTED</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">DURATION</div></div>
+  </div>
+  <button class="btn" style="display:block; margin: 0 auto;">◆ COMMENCE ◆</button>
+</section>
+
+<!-- 9 PAPER MINIMAL -->
+<section class="template tmpl-9" id="t9">
+  <button class="choose-btn" onclick="choose(9)" style="background:#1a1a1a; color:#fff;">✓ Diesen wählen</button>
+  <div class="template-marker" style="background:#1a1a1a; color:#fff;">TEMPLATE #9 · PAPER MINIMAL</div>
+  <h1>DBD <span>Survivor</span> Detector</h1>
+  <p style="color:#666; font-size: 15px;">Minimal, clean, no distractions.</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84.2</div><div class="stat-l">FPS</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">Visible</div></div>
+    <div class="stat"><div class="stat-v">1,247</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">Session</div></div>
+  </div>
+  <button class="btn">Start detection</button>
+</section>
+
+<!-- 10 HOLO PRISM -->
+<section class="template tmpl-10" id="t10">
+  <button class="choose-btn" onclick="choose(10)">✓ Diesen wählen</button>
+  <div class="template-marker" style="background: rgba(255,255,255,0.1); color:#fff; backdrop-filter: blur(20px);">TEMPLATE #10 · HOLO PRISM</div>
+  <h1>DBD Survivor Detector</h1>
+  <p style="color: #aabbdd; font-size: 17px;">Powered by advanced spatial intelligence</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-v">84.2</div><div class="stat-l">FPS LIVE</div></div>
+    <div class="stat"><div class="stat-v">3</div><div class="stat-l">SURVIVORS</div></div>
+    <div class="stat"><div class="stat-v">1,247</div><div class="stat-l">TOTAL</div></div>
+    <div class="stat"><div class="stat-v">12m</div><div class="stat-l">UPTIME</div></div>
+  </div>
+  <button class="btn">✦ Begin Session</button>
+</section>
+
+<script>
+function choose(n) {
+  const names = {
+    1: 'TACTICAL ORANGE',
+    2: 'MATRIX GREEN',
+    3: 'BLOOD RITUAL',
+    4: 'APPLE GLASS',
+    5: 'VAPORWAVE 80s',
+    6: 'INDUSTRIAL STEEL',
+    7: 'NEO BRUTALIST',
+    8: 'DARK LUXURY',
+    9: 'PAPER MINIMAL',
+    10: 'HOLO PRISM'
+  };
+  alert('Gewählt: Template #' + n + ' — ' + names[n] + '\n\nSchreib mir im Chat: "Nimm Template ' + n + '"');
+}
+</script>
+</body>
+</html>
