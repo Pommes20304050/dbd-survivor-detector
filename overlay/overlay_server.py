@@ -31,6 +31,42 @@ import cv2
 import mss
 from ultralytics import YOLO
 
+# GPU Monitoring (optional, faellt zurueck wenn nicht verfuegbar)
+try:
+    import pynvml
+    pynvml.nvmlInit()
+    GPU_HANDLE = pynvml.nvmlDeviceGetHandleByIndex(0)
+    GPU_NAME = pynvml.nvmlDeviceGetName(GPU_HANDLE)
+    GPU_AVAILABLE = True
+except Exception:
+    GPU_AVAILABLE = False
+    GPU_HANDLE = None
+    GPU_NAME = 'CPU'
+
+
+def get_gpu_stats():
+    if not GPU_AVAILABLE:
+        return {'util': 0, 'vram_used': 0, 'vram_total': 0, 'vram_pct': 0, 'temp': 0, 'power': 0, 'name': GPU_NAME}
+    try:
+        util = pynvml.nvmlDeviceGetUtilizationRates(GPU_HANDLE).gpu
+        mem = pynvml.nvmlDeviceGetMemoryInfo(GPU_HANDLE)
+        temp = pynvml.nvmlDeviceGetTemperature(GPU_HANDLE, pynvml.NVML_TEMPERATURE_GPU)
+        try:
+            power = pynvml.nvmlDeviceGetPowerUsage(GPU_HANDLE) / 1000
+        except Exception:
+            power = 0
+        return {
+            'util': util,
+            'vram_used': mem.used // (1024 * 1024),
+            'vram_total': mem.total // (1024 * 1024),
+            'vram_pct': round(mem.used / mem.total * 100, 1),
+            'temp': temp,
+            'power': round(power, 1),
+            'name': GPU_NAME
+        }
+    except Exception:
+        return {'util': 0, 'vram_used': 0, 'vram_total': 0, 'vram_pct': 0, 'temp': 0, 'power': 0, 'name': GPU_NAME}
+
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtCore import Qt, QTimer, QRectF, pyqtSignal, QObject
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QBrush, QPainterPath
@@ -492,6 +528,7 @@ def api_status():
             'max_detections':   state.max_detections,
             'active_preset':    state.active_preset,
             'presets':          SIMPLE_PRESETS,
+            'gpu':              get_gpu_stats(),
         })
 
 
