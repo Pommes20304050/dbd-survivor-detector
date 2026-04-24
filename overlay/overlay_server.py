@@ -31,6 +31,13 @@ import cv2
 import mss
 from ultralytics import YOLO
 
+# Schnellere Alternative zu mss auf Windows (DirectX-basiert)
+try:
+    import dxcam
+    DXCAM_AVAILABLE = True
+except ImportError:
+    DXCAM_AVAILABLE = False
+
 # GPU Monitoring (optional, faellt zurueck wenn nicht verfuegbar)
 try:
     import pynvml
@@ -283,13 +290,116 @@ class State:
 state = State()
 
 
+# ─── Capture Thread (parallel zum GPU) ────────────────────────────────────
+
+class FrameCapture(threading.Thread):
+    """Läuft parallel zur Inference — versorgt Queue mit neuen Frames."""
+
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.should_stop = threading.Event()
+        self.latest_frame = None
+        self.frame_lock = threading.Lock()
+        self.monitor_index = 1
+        self.monitors = []
+        self.capture_count = 0
+        self._dxcam = None
+        self._use_dxcam = DXCAM_AVAILABLE
+
+    def _init_dxcam(self, idx):
+        """Initialisiere dxcam für bestimmten Monitor. idx 0=all, 1=primary."""
+        try:
+            if self._dxcam is not None:
+                self._dxcam.stop()
+                del self._dxcam
+            # dxcam: output_idx 0 = primary monitor. mss: 1 = primary.
+            # Mapping: mss idx 1 = dxcam idx 0, mss idx 2 = dxcam idx 1
+            dx_idx = max(0, idx - 1)
+            self._dxcam = dxcam.create(output_idx=dx_idx)
+            self._dxcam.start(target_fps=200)
+            return True
+        except Exception as e:
+            print(f"[Capture] dxcam Init-Fehler: {e}, falle auf mss zurueck")
+            self._use_dxcam = False
+            return False
+
+    def set_monitor(self, idx):
+        self.monitor_index = idx
+        if self._use_dxcam:
+            self._init_dxcam(idx)
+
+    def run(self):
+        with mss.mss() as sct:
+            # Monitor-Liste bereitstellen
+            mons = []
+            for i, m in enumerate(sct.monitors):
+                label = 'Alle' if i == 0 else f'Monitor {i}'
+                mons.append({'idx': i, 'name': f'{label} ({m["width"]}x{m["height"]})',
+                             'width': m['width'], 'height': m['height']})
+            self.monitors = mons
+            with state.lock:
+                state.monitors_info = mons
+                if state.monitor_index >= len(sct.monitors):
+                    state.monitor_index = 1 if len(sct.monitors) > 1 else 0
+                self.monitor_index = state.monitor_index
+
+            # Versuche dxcam, sonst mss
+            if self._use_dxcam:
+                self._init_dxcam(self.monitor_index)
+                print(f"[Capture] dxcam aktiv (schnell)")
+            else:
+                print(f"[Capture] mss fallback")
+
+            last_idx = self.monitor_index
+
+            while not self.should_stop.is_set():
+                if not state.running:
+                    time.sleep(0.05)
+                    continue
+
+                # Monitor-Wechsel erkennen
+                with state.lock:
+                    desired = state.monitor_index
+                if desired != last_idx:
+                    last_idx = desired
+                    self.set_monitor(desired)
+
+                # Frame capturen
+                frame = None
+                if self._use_dxcam and self._dxcam is not None:
+                    try:
+                        frame = self._dxcam.get_latest_frame()
+                        # dxcam liefert BGR direkt — OK
+                    except Exception:
+                        frame = None
+
+                if frame is None:
+                    # Fallback mss
+                    mon_idx = desired if desired < len(sct.monitors) else 0
+                    frame = np.array(sct.grab(sct.monitors[mon_idx]))[:, :, :3]
+
+                with self.frame_lock:
+                    self.latest_frame = frame
+                    self.capture_count += 1
+
+                # dxcam ist capped auf Display-Refresh, mss bremst selber
+                # Kein sleep nötig
+
+    def get_frame(self):
+        with self.frame_lock:
+            return self.latest_frame
+
+
 # ─── Detection Engine ─────────────────────────────────────────────────────
 
 class DetectionEngine(threading.Thread):
-    def __init__(self):
+    def __init__(self, capture: 'FrameCapture'):
         super().__init__(daemon=True)
+        self.capture = capture
         self.model = None
         self.should_stop = threading.Event()
+        self.monitor_w = 1920
+        self.monitor_h = 1080
         self._load_model()
 
     def _load_model(self):
@@ -337,58 +447,42 @@ class DetectionEngine(threading.Thread):
         return False
 
     def run(self):
-        print(f"[Engine] Detection-Thread gestartet, wartet auf start...")
-        with mss.mss() as sct:
-            # Monitor-Liste cachen
-            mons = []
-            for i, m in enumerate(sct.monitors):
-                if i == 0:
-                    mons.append({'idx': 0, 'name': f'Alle Monitore ({m["width"]}x{m["height"]})',
-                                 'width': m['width'], 'height': m['height']})
-                else:
-                    mons.append({'idx': i, 'name': f'Monitor {i} ({m["width"]}x{m["height"]})',
-                                 'width': m['width'], 'height': m['height']})
-            with state.lock:
-                state.monitors_info = mons
-                if state.monitor_index >= len(sct.monitors):
-                    state.monitor_index = 1 if len(sct.monitors) > 1 else 0
+        print(f"[Engine] Detection-Thread gestartet (parallel zu Capture)")
 
-            mon_idx = state.monitor_index if len(sct.monitors) > state.monitor_index else 0
-            monitor = sct.monitors[mon_idx]
-            self.monitor_w = monitor['width']
-            self.monitor_h = monitor['height']
-            print(f"[Engine] Monitor: {self.monitor_w}x{self.monitor_h}")
+        last_capture_count = -1
 
-            while not self.should_stop.is_set():
-                if not state.running:
-                    with state.lock:
-                        state.current_boxes = []
-                        state.current_confs = []
-                    time.sleep(0.1)
-                    continue
+        while not self.should_stop.is_set():
+            if not state.running:
+                with state.lock:
+                    state.current_boxes = []
+                    state.current_confs = []
+                time.sleep(0.05)
+                continue
 
-                t0 = time.perf_counter()
-                try:
-                    # Monitor-Index live pruefen (Nutzer kann im UI wechseln)
-                    with state.lock:
-                        desired_idx = state.monitor_index
-                    if 0 <= desired_idx < len(sct.monitors):
-                        monitor = sct.monitors[desired_idx]
-                        self.monitor_w = monitor['width']
-                        self.monitor_h = monitor['height']
-                    frame = np.array(sct.grab(monitor))[:, :, :3]
+            # Warte auf neuen Frame vom Capture-Thread
+            frame = self.capture.get_frame()
+            cur_count = self.capture.capture_count
+            if frame is None or cur_count == last_capture_count:
+                time.sleep(0.001)   # kurzer Wait, dann nochmal checken
+                continue
+            last_capture_count = cur_count
 
-                    model, imgsz, augment = self._get_model()
-                    results = model(
-                        frame, classes=self.classes,
-                        conf=state.conf_threshold,
-                        imgsz=imgsz, augment=augment, verbose=False
-                    )[0]
-                except Exception as e:
-                    # CUDA OOM / driver hang / model error → nicht Thread killen
-                    print(f"[Engine] Inference Fehler: {e}")
-                    time.sleep(0.5)
-                    continue
+            t0 = time.perf_counter()
+            try:
+                h, w = frame.shape[:2]
+                self.monitor_w = w
+                self.monitor_h = h
+
+                model, imgsz, augment = self._get_model()
+                results = model(
+                    frame, classes=self.classes,
+                    conf=state.conf_threshold,
+                    imgsz=imgsz, augment=augment, verbose=False
+                )[0]
+            except Exception as e:
+                print(f"[Engine] Inference Fehler: {e}")
+                time.sleep(0.1)
+                continue
 
                 boxes = []
                 confs = []
@@ -795,8 +889,13 @@ def main():
     flask_thread.start()
     time.sleep(0.5)
 
+    # Capture Thread zuerst starten (versorgt Engine mit Frames)
+    capture = FrameCapture()
+    capture.start()
+    time.sleep(0.3)   # Warten bis Monitor-Liste bereit
+
     # Detection Engine starten
-    engine = DetectionEngine()
+    engine = DetectionEngine(capture)
     engine.start()
 
     # Qt Application
@@ -822,6 +921,7 @@ def main():
         sys.exit(app_qt.exec_())
     except SystemExit:
         engine.should_stop.set()
+        capture.should_stop.set()
 
 
 if __name__ == '__main__':
