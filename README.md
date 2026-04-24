@@ -5,6 +5,26 @@ Transparent overlay + real-time dashboard with GPU/CPU monitoring, TensorRT acce
 
 ![Dashboard](docs/dashboard.png)
 
+> ## ⚠️ Project Status: Work in Progress
+>
+> **This project still needs significantly more training samples to reach production-level accuracy.**
+>
+> The current v3 model was trained on 2210 images from a limited set of matches. While it already achieves 96.8% mAP@50 on its test split, real-world performance varies based on:
+>
+> - **Maps not seen in training** — detection quality drops on unfamiliar environments
+> - **Unusual skins / cosmetics** — rare outfits may not be recognized
+> - **Extreme distances** — survivors far away are still inconsistently detected
+> - **Heavy occlusion** — survivors mostly hidden behind objects need more samples
+> - **Dark maps / night variants** — fewer low-light training samples exist
+>
+> **To improve the model, we need more data:**
+> - 5,000-10,000+ diverse training images
+> - Coverage of all 40+ DBD maps in both day/night variants
+> - Every survivor with multiple outfit variants
+> - Edge cases: injured, crouched, locker-hidden, pallet-stunned, hooked
+>
+> Contributions welcome via Force-Capture (F-hotkey) during gameplay. Collected samples can be labeled via `label_tool.py` and fed back into training.
+
 ## Features
 
 - **YOLOv8-Large Fine-tuned Model** — 96.8% mAP@50 on custom training data (2210 images)
