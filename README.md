@@ -19,7 +19,7 @@ Transparent overlay + real-time dashboard with GPU/CPU monitoring, TensorRT acce
 >
 > **To improve the model, we need more data:**
 > - 5,000-10,000+ diverse training images
-> - Coverage of all 40+ DBD maps in both day/night variants
+> - Coverage of all 40+ DBD maps
 > - Every survivor with multiple outfit variants
 > - Edge cases: injured, crouched, locker-hidden, pallet-stunned, hooked
 >
