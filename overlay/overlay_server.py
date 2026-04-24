@@ -76,7 +76,7 @@ SIMPLE_PRESETS = {
         'show_labels':     True,
         'show_crosshair':  True,
         'show_hud_regions': False,
-        'color':           '#00ff88',
+        'color':           '#ff8c00',
         'box_thickness':   3,
         'glow':            True,
     },
@@ -89,7 +89,7 @@ SIMPLE_PRESETS = {
         'show_labels':     True,
         'show_crosshair':  True,
         'show_hud_regions': False,
-        'color':           '#00d4ff',
+        'color':           '#ffcc00',
         'box_thickness':   4,
         'glow':            True,
     },
@@ -115,7 +115,7 @@ SIMPLE_PRESETS = {
         'show_labels':     False,
         'show_crosshair':  False,
         'show_hud_regions': False,
-        'color':           '#00d4ff',
+        'color':           '#ffa833',
         'box_thickness':   3,
         'glow':            True,
     },
@@ -192,7 +192,7 @@ class State:
     show_hud_regions = False
     show_crosshair   = True
     show_labels      = True
-    detection_color  = '#00ff88'
+    detection_color  = '#ff8c00'
     current_fps      = 0.0
     detection_count  = 0
     total_detections = 0

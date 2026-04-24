@@ -293,7 +293,7 @@ function drawChart() {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
     }
 
-    ctx.fillStyle = 'rgba(107, 119, 163, 0.6)';
+    ctx.fillStyle = 'rgba(138, 104, 80, 0.6)';
     ctx.font = '10px JetBrains Mono';
     ctx.textAlign = 'right';
     for (let i = 0; i <= 4; i++) {
@@ -304,8 +304,8 @@ function drawChart() {
 
     // Fill
     const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, 'rgba(0, 255, 157, 0.4)');
-    grad.addColorStop(1, 'rgba(0, 255, 157, 0)');
+    grad.addColorStop(0, 'rgba(255, 140, 0, 0.4)');
+    grad.addColorStop(1, 'rgba(255, 140, 0, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(0, h);
@@ -315,9 +315,9 @@ function drawChart() {
     ctx.fill();
 
     // Line
-    ctx.strokeStyle = '#00ff9d';
+    ctx.strokeStyle = '#ff8c00';
     ctx.lineWidth = 2;
-    ctx.shadowColor = '#00ff9d';
+    ctx.shadowColor = '#ff8c00';
     ctx.shadowBlur = 10;
     ctx.beginPath();
     chartData.forEach((v, i) => {
@@ -332,7 +332,7 @@ function drawChart() {
     // Dot
     const lx = (chartData.length - 1) * step;
     const ly = h - (chartData[chartData.length - 1] / max) * h;
-    ctx.fillStyle = '#00ff9d';
+    ctx.fillStyle = '#ff8c00';
     ctx.beginPath();
     ctx.arc(lx, ly, 4, 0, Math.PI * 2);
     ctx.fill();
@@ -372,7 +372,7 @@ function initParticles() {
             if (p.y < 0) p.y = c.height;
             if (p.y > c.height) p.y = 0;
 
-            ctx.fillStyle = `rgba(0, 255, 157, ${p.size * 0.3})`;
+            ctx.fillStyle = `rgba(255, 140, 0, ${p.size * 0.3})`;
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();
@@ -385,7 +385,7 @@ function initParticles() {
                 const dy = parts[i].y - parts[j].y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < 120) {
-                    ctx.strokeStyle = `rgba(0, 255, 157, ${(1 - dist / 120) * 0.08})`;
+                    ctx.strokeStyle = `rgba(255, 140, 0, ${(1 - dist / 120) * 0.08})`;
                     ctx.lineWidth = 0.5;
                     ctx.beginPath();
                     ctx.moveTo(parts[i].x, parts[i].y);
